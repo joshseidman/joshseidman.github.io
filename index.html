@@ -86,6 +86,8 @@
     object-fit: cover;
     object-position: center 25%; /* keeps the face in frame on tall photos; adjust if needed */
     display: block;
+    border: 3px solid var(--navy);
+    box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.35); /* same shadow as the images below */
   }
   .photo-fallback {
     width: 300px; max-width: 100%; aspect-ratio: 1 / 1; border-radius: 50%;
@@ -158,9 +160,11 @@
     display: block;
     width: 100%;
     height: auto;
-    border: 1px solid var(--line);
+    border: 3px solid var(--navy);
     border-radius: 4px;
     background: #fff;
+    /* Drop shadow down and to the right, like Word's "Offset: Bottom Right" */
+    box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.35);
   }
   .feature-placeholder {
     display: none;
