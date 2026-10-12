@@ -1,0 +1,1412 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Five Theorems</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,500;1,700&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: a late-night seminar room. Theorem board across the top, the working table in the middle,
+   a running proof log down the side. One dark look on purpose, matching the printed cards. */
+:root{
+  color-scheme: dark;
+  --ink:#131027;
+  --panel:#1c1838;
+  --panel-2:#262150;
+  --rule:#3a3470;
+  --chalk:#efeaff;
+  --muted:#aaa3d8;
+  --brass:#e6b85c;
+  --brass-ink:#2a1d05;
+  --crimson:#a81c2a;
+  --violet:#7d52ff;
+  --felt:#165238;
+  --felt-edge:#43c285;
+  --curse:#3b0d1d;
+  --curse-edge:#d9476b;
+  --good:#5ad596;
+  --warn:#f2b84b;
+  --bad:#ff7486;
+  --font-display:"STIX Two Text", Cambria, "Times New Roman", serif;
+  --font-body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --font-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%}
+body{background:var(--ink);color:var(--chalk);font-family:var(--font-body);font-size:15px;line-height:1.45;margin:0}
+#bg{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.app{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:10px 48px;display:grid;gap:16px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.45}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;font-weight:600}
+p{margin:0}
+.muted{color:var(--muted)}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--brass);font-weight:700}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+
+.btn{border:1px solid var(--rule);background:var(--panel-2);border-radius:8px;padding:8px 14px;font-weight:600}
+.btn:hover:not(:disabled){border-color:var(--brass)}
+.btn.primary{background:var(--brass);color:var(--brass-ink);border-color:var(--brass)}
+.btn.primary:hover:not(:disabled){filter:brightness(1.08)}
+.btn.small{padding:5px 10px;font-size:13px}
+.btn.ghost{background:transparent}
+
+/* ---------- header ---------- */
+.bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 20px;padding-block:6px 12px;border-bottom:1px solid var(--rule)}
+.brand{display:flex;flex-direction:column}
+.brand .mark{font-family:var(--font-display);font-style:italic;font-weight:700;font-size:26px;line-height:1.1}
+.brand .sub{font-size:12px;color:var(--muted);letter-spacing:.06em}
+.phase-pill{font-family:var(--font-mono);font-size:13px;border:1px solid var(--rule);border-radius:999px;padding:4px 12px;color:var(--brass)}
+.bar-actions{display:flex;gap:8px}
+
+/* ---------- theorem board ---------- */
+.board-wrap{display:grid;gap:8px}
+.board-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.board{display:flex;gap:12px;align-items:flex-end}
+.thm{background:var(--crimson);border-radius:9px;padding:5px;position:relative;flex:0 1 172px;min-width:0;aspect-ratio:725/990;overflow:hidden;box-shadow:0 8px 18px rgba(0,0,0,.4);cursor:zoom-in}
+.thm-in{border:2px solid var(--violet);border-radius:6px;padding:10px 10px 12px;display:grid;gap:8px;height:100%;align-content:start}
+button.thm{border:0;font:inherit;color:inherit;text-align:left}
+.thm.proven{box-shadow:0 0 0 3px var(--brass),0 8px 22px rgba(230,184,92,.3)}
+/* the two lemma boxes printed on every theorem card */
+.slot-ov{position:absolute;top:56.2%;height:38.8%;width:38.4%;border-radius:3px;display:grid;place-items:center;align-content:center;gap:2px;pointer-events:none}
+.slot-ov.l{left:6.9%}.slot-ov.r{left:54.8%}
+.slot-ov.filled{background:rgba(230,184,92,.86);color:var(--brass-ink);box-shadow:inset 0 0 0 2px #fff3}
+.slot-ov .gl{font-family:var(--font-display);font-size:clamp(18px,2.4vw,30px);line-height:1}
+.slot-ov small{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.decks{margin-left:auto;display:flex;gap:14px;align-items:flex-end;padding-left:8px}
+.pile{display:grid;gap:6px;justify-items:center;font-size:12px;color:var(--muted)}
+.pile .card{width:66px;padding:0;box-shadow:2px 2px 0 #0006,4px 4px 0 #0004,6px 6px 0 #0003}
+.pile .card.empty{opacity:.25;box-shadow:none}
+.pile b{font-family:var(--font-mono);color:var(--chalk);font-weight:600}
+.thm-name{font-family:var(--font-display);font-size:17px;line-height:1.15}
+.slots{display:grid;gap:5px}
+.slot{display:flex;align-items:center;gap:8px;font-size:13px;border-radius:5px;padding:4px 7px;background:rgba(0,0,0,.25);border:1px dashed rgba(255,255,255,.35)}
+.slot .gl{font-family:var(--font-display);font-size:16px;width:18px;text-align:center}
+.slot.filled{border-style:solid;border-color:var(--brass);background:rgba(230,184,92,.18)}
+.slot.filled::after{content:"✓";margin-left:auto;color:var(--brass);font-weight:700}
+.thm.proven{background:linear-gradient(160deg,var(--crimson),#6d1020)}
+.thm.proven .thm-in{border-color:var(--brass)}
+.qed{position:absolute;right:8px;top:38%;transform:rotate(-8deg);z-index:2;font-family:var(--font-display);font-weight:700;font-style:italic;color:var(--brass-ink);background:var(--brass);padding:2px 8px;border-radius:4px;font-size:14px;box-shadow:0 2px 0 rgba(0,0,0,.3)}
+
+/* ---------- status strip ---------- */
+.status{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);background:var(--panel);border-radius:999px;padding:3px 11px;font-size:13px;white-space:nowrap}
+.chip b{font-family:var(--font-mono);font-weight:600}
+.chip.bad{border-color:var(--bad);color:var(--bad)}
+.chip.warn{border-color:var(--warn);color:var(--warn)}
+.chip.good{border-color:var(--good);color:var(--good)}
+.chip.brass{border-color:var(--brass);color:var(--brass)}
+
+/* ---------- main layout ---------- */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:18px;display:grid;gap:16px;min-width:0}
+.panel h2{font-size:24px}
+.lede{color:var(--muted);max-width:65ch}
+
+/* ---------- cards ---------- */
+.hand{display:flex;flex-wrap:wrap;gap:14px 12px}
+.cw{width:132px;display:grid;gap:6px;align-content:start}
+.card{position:relative;width:100%;aspect-ratio:725/990;overflow:hidden;border-radius:9px;padding:4px;display:flex;background:var(--felt);box-shadow:0 6px 14px rgba(0,0,0,.35)}
+/* card art sits over a text version of the card, which shows only if the image can't load */
+.art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;user-select:none;-webkit-user-drag:none}
+.card:not(.noart) > .c-in,.thm:not(.noart) > .thm-in,.goal:not(.noart) > .goal-in{visibility:hidden}
+button.zoom{all:unset;display:block;cursor:zoom-in;border-radius:9px}
+button.zoom:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.cw.fresh .card{box-shadow:0 0 0 3px var(--brass),0 0 20px rgba(230,184,92,.5)}
+.zoomed{display:grid;gap:10px;justify-items:center}
+.zoomed img{width:min(360px,78vw);aspect-ratio:725/990;border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.55)}
+.c-in{flex:1;border:1.5px solid var(--felt-edge);border-radius:6px;padding:7px 7px 8px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.c-eye{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--felt-edge);font-weight:700}
+.c-num{font-family:var(--font-display);font-size:44px;line-height:1;margin:auto 0;text-align:center;font-variant-numeric:lining-nums}
+.fr{display:inline-flex;flex-direction:column;align-items:center;font-size:.62em;line-height:1}
+.fr span:first-child{border-bottom:2px solid currentColor;padding:0 4px 2px}
+.fr span:last-child{padding-top:2px}
+.c-glyph{font-family:var(--font-display);font-size:38px;text-align:center;line-height:1;margin-top:6px;color:var(--brass)}
+.c-name{font-family:var(--font-display);font-weight:600;font-size:15px;line-height:1.15}
+.k-lemma .c-name{text-align:center}
+.c-sym{font-family:var(--font-display);font-style:italic;font-size:17px;color:var(--brass)}
+.c-text{font-size:11.5px;line-height:1.3;color:#d6f0e2}
+.c-play{margin-top:auto;border:0;border-radius:5px;padding:5px 6px;font-size:12px;font-weight:700;background:var(--brass);color:var(--brass-ink)}
+.c-play:disabled{background:var(--panel-2);color:var(--muted);opacity:1;font-weight:600}
+.k-lemma{background:#1d3f6b}
+.k-lemma .c-in{border-color:#7fb2ff}
+.k-lemma .c-eye{color:#9cc3ff}
+.k-bonus{background:#40235f}
+.k-bonus .c-in{border-color:#b890ff}
+.k-bonus .c-eye{color:#c9a8ff}
+.k-bonus .c-text{color:#e6dcff}
+.c-foot{display:grid;gap:4px}
+.c-foot .c-play{margin-top:0}
+.c-toss{border:1px solid var(--rule);background:transparent;border-radius:5px;padding:3px 6px;font-size:11.5px;font-weight:600;color:var(--muted)}
+.c-toss:hover{border-color:var(--bad);color:var(--bad)}
+.minis{display:flex;flex-wrap:wrap;gap:10px}
+.mini{margin:0;width:74px;display:grid;gap:4px;font-size:11.5px;color:var(--muted);text-align:center;line-height:1.25}
+.mini .card{padding:0}
+
+/* ---------- scorecard ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;width:100%}
+.stat{background:var(--panel-2);border:1px solid var(--rule);border-radius:10px;padding:12px 14px;display:grid;gap:2px}
+.stat-v{font-family:var(--font-display);font-size:40px;line-height:1;color:var(--brass);font-variant-numeric:lining-nums tabular-nums}
+.stat-l{font-size:13px;color:var(--muted)}
+.score{font-family:var(--font-mono);font-weight:600;font-size:18px;font-variant-numeric:tabular-nums}
+.s-hi{color:var(--good)}.s-mid{color:var(--warn)}.s-lo{color:var(--bad)}
+.minibar{height:4px;width:64px;background:var(--panel-2);border-radius:2px;margin-top:4px;overflow:hidden}
+.minibar span{display:block;height:100%;background:currentColor}
+.full{width:100%}
+
+.played{display:flex;flex-wrap:wrap;gap:6px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--rule);padding-bottom:10px}
+.tabs button{border:1px solid var(--rule);background:transparent;border-radius:8px;padding:6px 12px;display:flex;gap:8px;align-items:center}
+.tabs button[aria-selected="true"]{background:var(--panel-2);border-color:var(--brass)}
+.tab-count{font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.row > .center,.row > .lede{flex:1 1 240px}
+.spread{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+
+/* ---------- goal ---------- */
+.goal{position:relative;background:var(--brass);color:var(--brass-ink);border-radius:11px;padding:5px;width:176px;aspect-ratio:725/990;overflow:hidden;display:inline-flex;flex:none;box-shadow:0 10px 24px rgba(0,0,0,.45)}
+.goal.small{width:112px;border-radius:8px}
+.goal-in{flex:1;border:2px solid rgba(42,29,5,.55);border-radius:7px;padding:8px 14px;text-align:center;display:grid;gap:2px;align-content:center}
+.flip{perspective:1000px;flex:none}
+.flip-in{position:relative;transform-style:preserve-3d}
+.flip .face{backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.flip .back{position:absolute;inset:0;transform:rotateY(180deg)}
+.flip .back .goal{width:100%}
+.flip.go .flip-in{animation:flip .9s cubic-bezier(.25,.8,.25,1) .15s both}
+@keyframes flip{from{transform:rotateY(180deg)}to{transform:rotateY(0)}}
+@media (prefers-reduced-motion:reduce){.flip.go .flip-in{animation:none}}
+.g-eye{font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:700}
+.g-val{font-family:var(--font-display);font-size:52px;line-height:1;font-weight:600}
+.g-sub{font-size:12px;font-family:var(--font-mono);min-height:1em}
+.goal.small .g-val{font-size:34px}
+.goal.personal{background:#cfd8ff}
+button.goal{border:0;padding:5px;cursor:pointer}
+button.goal:hover{filter:brightness(1.08);transform:translateY(-3px)}
+
+/* ---------- puzzle workspace ---------- */
+.ws-head{display:flex;flex-wrap:wrap;gap:14px;align-items:stretch;justify-content:space-between}
+.ws-goals{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.timer{font-family:var(--font-mono);font-size:42px;font-weight:600;letter-spacing:.02em;align-self:center;font-variant-numeric:tabular-nums}
+.timer.low{color:var(--bad)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,118px));gap:12px}
+.tile{position:relative;border:1.5px solid var(--felt-edge);background:var(--felt);border-radius:9px;padding:12px 6px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;aspect-ratio:725/990;min-width:0;overflow:hidden;box-shadow:0 6px 14px rgba(0,0,0,.35)}
+.tile.art-tile{padding:0;border:0}
+.tile.derived{background:var(--panel-2);border-color:var(--violet)}
+.tile.sel{border-color:var(--brass);box-shadow:0 0 0 3px var(--brass),0 0 18px rgba(230,184,92,.45);transform:translateY(-4px)}
+.tile .ord,.tile .uses{z-index:1}
+.tile .uses{background:rgba(19,16,39,.8);border-radius:4px;padding:0 4px}
+.t-val{font-family:var(--font-display);font-size:30px;line-height:1.1;overflow-wrap:anywhere;text-align:center}
+.t-exp{font-family:var(--font-mono);font-size:11px;color:var(--muted);overflow-wrap:anywhere;text-align:center;max-width:100%}
+.ord{position:absolute;top:4px;left:6px;font-family:var(--font-mono);font-size:11px;background:var(--brass);color:var(--brass-ink);border-radius:4px;padding:0 5px;font-weight:600}
+.uses{position:absolute;top:4px;right:6px;font-family:var(--font-mono);font-size:11px;color:var(--brass)}
+.preview{min-height:30px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:15px}
+.pv-val{font-family:var(--font-display);font-size:22px}
+.ops{display:flex;gap:8px;flex-wrap:wrap}
+.op{width:56px;height:52px;border-radius:10px;border:1px solid var(--rule);background:var(--panel-2);font-family:var(--font-display);font-size:26px}
+.op:hover:not(:disabled){border-color:var(--brass);color:var(--brass)}
+.op.on{background:var(--brass);color:var(--brass-ink);border-color:var(--brass)}
+.tools{display:flex;flex-wrap:wrap;gap:12px}
+.tool{width:92px;border:0;background:transparent;padding:0;display:grid;gap:5px;justify-items:center;font-size:12.5px;line-height:1.25;text-align:center;color:var(--chalk)}
+.tool .card{padding:0;transition:transform .12s, box-shadow .12s}
+.tool:hover .card{transform:translateY(-4px);box-shadow:0 0 0 2px var(--brass),0 10px 20px rgba(0,0,0,.45)}
+.tool i{font-family:var(--font-display);color:var(--brass);font-style:italic}
+.msg{min-height:20px;color:var(--warn);font-size:14px}
+.section-label{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+
+/* ---------- results ---------- */
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+td.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.expr{font-family:var(--font-mono);font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.tier{font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;border:1px solid currentColor;white-space:nowrap}
+.t-perfect{color:var(--good)}.t-good{color:#9be07a}.t-ok{color:var(--warn)}.t-poor,.t-none{color:var(--bad)}
+.meter{height:12px;border-radius:999px;background:var(--panel-2);overflow:hidden;position:relative;border:1px solid var(--rule)}
+.meter span{display:block;height:100%;background:var(--brass)}
+.meter.pass span{background:var(--good)}
+.verdict{font-family:var(--font-display);font-size:28px;font-style:italic}
+.verdict.pass{color:var(--good)}.verdict.fail{color:var(--bad)}
+.recap{margin:0;padding-left:18px;display:grid;gap:4px}
+
+/* ---------- handoff / over ---------- */
+.center{display:grid;gap:14px;justify-items:start}
+.effects{margin:0;padding-left:18px;display:grid;gap:3px;color:var(--muted)}
+.over-title{font-family:var(--font-display);font-style:italic;font-weight:700;font-size:64px;line-height:1}
+.over-title.win{color:var(--brass)}.over-title.lose{color:var(--bad)}
+
+/* ---------- log ---------- */
+.log{background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:14px;display:grid;gap:8px;max-height:70vh;overflow:auto;min-width:0}
+.log h3{font-size:18px}
+.log ol{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:13px}
+.log li{display:grid;grid-template-columns:34px 1fr;gap:6px;color:var(--muted)}
+.lg-r{font-family:var(--font-mono);font-size:11px;color:var(--rule);padding-top:2px}
+.log li.round{color:var(--brass);font-weight:700}
+.log li.good{color:var(--good)}.log li.bad{color:var(--bad)}.log li.warn{color:var(--warn)}
+
+/* ---------- setup ---------- */
+.setup{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:28px;align-items:start;padding-block:28px}
+.setup h1{font-size:clamp(48px,9vw,96px);font-style:italic;font-weight:700;line-height:.95}
+.setup .lede{font-size:17px;margin-top:14px}
+.form{display:grid;gap:18px;margin-top:26px}
+.field{display:grid;gap:8px}
+.field > label, .field > .lbl{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{min-width:44px;border:1px solid var(--rule);background:var(--panel);border-radius:8px;padding:8px 12px;font-family:var(--font-mono)}
+.seg button[aria-pressed="true"]{border-color:var(--brass);background:var(--panel-2);color:var(--brass)}
+.names{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+input[type=text]{font:inherit;background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:8px 10px;color:var(--chalk);width:100%}
+input[type=text]:focus{border-color:var(--brass);outline:none}
+.diffs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.diff{border:1px solid var(--rule);background:var(--panel);border-radius:10px;padding:10px;text-align:left;display:grid;gap:2px}
+.diff[aria-pressed="true"]{border-color:var(--brass);background:var(--panel-2)}
+.diff b{font-family:var(--font-display);font-size:18px}
+.diff span{font-size:12px;color:var(--muted);font-family:var(--font-mono)}
+.check{display:flex;gap:10px;align-items:center}
+.check input{width:18px;height:18px;accent-color:var(--brass)}
+.side{display:grid;gap:22px}
+/* the five theorem cards fanned out on the setup screen */
+.fan{position:relative;height:300px;overflow:hidden}
+.fan .card{position:absolute;left:50%;bottom:-6px;width:164px;padding:0;transform-origin:50% 135%;transform:translateX(-50%) rotate(var(--r))}
+@media (prefers-reduced-motion:no-preference){
+  .fan .card{animation:deal .9s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i) * 70ms)}
+  .fan.still .card{animation:none}
+  @keyframes deal{from{transform:translateX(-50%) rotate(0deg) translateY(30px);opacity:0}to{transform:translateX(-50%) rotate(var(--r));opacity:1}}
+}
+.how{background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:18px;display:grid;gap:12px}
+.how h2{font-size:22px}
+.how ol{margin:0;padding-left:20px;display:grid;gap:8px;color:var(--muted)}
+.how ol b{color:var(--chalk)}
+
+/* ---------- modal ---------- */
+#modal{position:fixed;inset:0;z-index:20;background:rgba(8,6,20,.72);display:grid;place-items:center;padding:16px}
+.dlg{background:var(--panel);border:1px solid var(--brass);border-radius:12px;padding:20px;width:min(520px,100%);max-height:85vh;overflow:auto;display:grid;gap:12px}
+.dlg.wide{width:min(720px,100%)}
+.dlg h3{font-size:22px}
+.dlg p{color:var(--muted)}
+.dlg-opts{display:grid;gap:8px}
+.opt{text-align:left;border:1px solid var(--rule);background:var(--panel-2);border-radius:8px;padding:10px 12px;display:grid;gap:2px}
+.opt:hover{border-color:var(--brass)}
+.opt small{color:var(--muted)}
+.dlg-foot{display:flex;justify-content:flex-end;gap:8px}
+.err{color:var(--bad);font-size:14px;min-height:1.2em}
+.rules h4{font-family:var(--font-display);font-size:17px;margin:6px 0 2px;color:var(--brass);font-weight:600}
+.rules ul{margin:0;padding-left:18px;display:grid;gap:4px;color:var(--muted)}
+.rules b{color:var(--chalk)}
+
+@media (max-width:980px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .log{max-height:320px}
+  .setup{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:760px){
+  .board{overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory}
+  .thm{flex:0 0 132px;scroll-snap-align:start}
+  .diffs{grid-template-columns:minmax(0,1fr)}
+  .cw{width:calc(33.3% - 8px)}
+  .goal{width:136px}
+  .fan{height:230px}
+  .fan .card{width:120px}
+  .timer{font-size:32px}
+  .over-title{font-size:44px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .tile,.btn,.op,.goal{transition:border-color .12s, box-shadow .12s, filter .12s}
+}
+</style>
+
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="app" id="app"></div>
+<div id="modal" hidden></div>
+
+<script>
+"use strict";
+/* ================= exact / real arithmetic ================= */
+const ABS = x => x < 0n ? -x : x;
+function gcd(a,b){a=ABS(a);b=ABS(b);while(b){[a,b]=[b,a%b]}return a}
+function Q(n,d=1){
+  n=BigInt(n); d=BigInt(d);
+  if(d===0n) throw new Error('Division by zero is undefined.');
+  if(d<0n){n=-n;d=-d}
+  const g=gcd(n,d)||1n; n/=g; d/=g;
+  if(n.toString().length>300||d.toString().length>300) throw new Error('That number is too large to work with.');
+  return {e:true,n,d};
+}
+function F(x){
+  if(!Number.isFinite(x)) throw new Error('That result is too large or undefined.');
+  const ax=Math.abs(x);
+  if(ax<1e15){ for(let d=1;d<=100;d++){ const k=Math.round(x*d); if(Math.abs(x*d-k)<1e-9*Math.max(1,ax)) return Q(k,d); } }
+  return {e:false,v:x};
+}
+const num = a => a.e ? Number(a.n)/Number(a.d) : a.v;
+const isZero = a => a.e ? a.n===0n : Math.abs(a.v)<1e-12;
+const isInt = a => a.e && a.d===1n;
+function add(a,b){return a.e&&b.e?Q(a.n*b.d+b.n*a.d,a.d*b.d):F(num(a)+num(b))}
+function sub(a,b){return a.e&&b.e?Q(a.n*b.d-b.n*a.d,a.d*b.d):F(num(a)-num(b))}
+function mul(a,b){return a.e&&b.e?Q(a.n*b.n,a.d*b.d):F(num(a)*num(b))}
+function div(a,b){if(isZero(b))throw new Error('Division by zero is undefined.');return a.e&&b.e?Q(a.n*b.d,a.d*b.n):F(num(a)/num(b))}
+function cmp(a,b){if(a.e&&b.e){const s=a.n*b.d-b.n*a.d;return s>0n?1:s<0n?-1:0}const s=num(a)-num(b);return Math.abs(s)<1e-9?0:s>0?1:-1}
+const absQ = a => a.e ? Q(ABS(a.n),a.d) : {e:false,v:Math.abs(a.v)};
+function floorQ(a){ if(a.e){ return a.n>=0n ? Q(a.n/a.d) : Q(-((-a.n+a.d-1n)/a.d)); } return Q(Math.floor(a.v)); }
+function iroot(n,q){ if(n===0n) return 0n; const x=Number(n); if(!(x<2**53)) return null; const r=Math.round(Math.pow(x,1/q)); for(const c of [r-1,r,r+1]){ if(c>=0 && BigInt(c)**BigInt(q)===n) return BigInt(c); } return null; }
+function pow(a,b){
+  if(isZero(a) && cmp(b,Q(0))<0) throw new Error('0 can’t be raised to a negative power.');
+  if(a.e && b.e && b.d===1n){
+    const k=ABS(b.n);
+    const bits=BigInt(Math.max(a.n.toString(2).length,a.d.toString(2).length));
+    if(bits*k<=990n){ const n=a.n**k, d=a.d**k; return b.n<0n ? Q(d,n) : Q(n,d); }
+    return F(Math.pow(num(a),num(b)));
+  }
+  if(a.e && b.e && b.d<=12n && a.n>=0n){
+    const q=Number(b.d), rn=iroot(a.n,q), rd=iroot(a.d,q);
+    if(rn!==null && rd!==null) return pow(Q(rn,rd),Q(b.n));
+  }
+  const x=num(a), y=num(b);
+  if(x<0){
+    if(b.e && b.d%2n===1n){ const r=-Math.pow(-x,1/Number(b.d)); return F(Math.pow(r,Number(b.n))); }
+    throw new Error('A negative number can’t be raised to a fractional power.');
+  }
+  return F(Math.pow(x,y));
+}
+function factorial(a){
+  if(!isInt(a)||a.n<0n) throw new Error('Factorial needs a whole number that is 0 or more.');
+  if(a.n>100n) throw new Error('That factorial is too large to work with.');
+  let r=1n; for(let i=2n;i<=a.n;i++) r*=i; return Q(r);
+}
+function isPrimeQ(v){ if(!isInt(v)) return false; const n=Number(v.n); if(n<2) return false; for(let i=2;i*i<=n;i++) if(n%i===0) return false; return true; }
+function dec(x){ const ax=Math.abs(x); const s=(ax!==0&&(ax>=1e12||ax<1e-4))?x.toExponential(3):String(+x.toFixed(4)); return s.replace('-','−'); }
+function fmt(a){
+  if(a==null) return '—';
+  if(a.e){
+    const ns=ABS(a.n).toString(), ds=a.d.toString(), sg=a.n<0n?'−':'';
+    if(a.d===1n) return ns.length<=12 ? sg+ns : '≈'+dec(num(a));
+    if(ns.length+ds.length<=9) return sg+ns+'/'+ds;
+    return '≈'+dec(num(a));
+  }
+  return '≈'+dec(a.v);
+}
+function parseNum(s){
+  s=String(s).trim().replace(/−/g,'-');
+  let m;
+  try{
+    if((m=s.match(/^(-?)(\d+)\s+(\d+)\s*\/\s*(\d+)$/))){ const v=add(Q(m[2]),Q(m[3],m[4])); return m[1]?mul(v,Q(-1)):v; }
+    if((m=s.match(/^(-?\d+)\s*\/\s*(\d+)$/))) return Q(m[1],m[2]);
+    if((m=s.match(/^(-?)(\d*)\.(\d+)$/))) return Q(BigInt(m[1]+(m[2]||'0')+m[3]),10n**BigInt(m[3].length));
+    if(/^-?\d+$/.test(s)) return Q(s);
+  }catch(e){ return null; }
+  return null;
+}
+
+/* ================= game data ================= */
+const LEMMAS = {
+  nt:{name:'Number theory',glyph:'ℤ'}, an:{name:'Analysis',glyph:'∫'}, pr:{name:'Probability',glyph:'ℙ'},
+  ge:{name:'Geometry',glyph:'△'}, to:{name:'Topology',glyph:'≃'}
+};
+const THEOREMS = [
+  ['Seidman’s theorem',['nt','nt']], ['Roush’s theorem',['an','pr']], ['Kurkoglu’s theorem',['an','to']],
+  ['Büyükbaş’ theorem',['ge','pr']], ['Embry’s theorem',['ge','to']]
+];
+const ASSIST = {
+  geo:{name:'Infinite geometric series',count:2,sym:'1/(1−x)',text:'Turn a number between 0 and 1 into 1/(1−x).'},
+  square:{name:'The Square',count:4,sym:'x²',text:'Square one number.'},
+  triangle:{name:'The Triangle',count:4,sym:'x(x+1)/2',text:'Turn an integer into its triangle number.'},
+  quotient:{name:'Quotient map',count:2,sym:'x ↦ y',text:'Change one number card into another number card in your hand.'},
+  seems:{name:'Seems to work',count:2,sym:'0 … 20',text:'Wild card: any integer from 0 to 20.'},
+  koch:{name:'Koch snowflake',count:2,sym:'4/3',text:'Your personal goal becomes 4/3.'}
+};
+const BONUS = {
+  office:{name:'Office Hours',count:3,text:'The pass mark is 1 lower for this round’s puzzle.'},
+  second:{name:'A Second Option',count:3,text:'Draw an extra goal card. The team picks which to use.'},
+  easy:{name:'Math is Easy',count:6,text:'Remove one Math is Hard curse, if any are in play.'},
+  expand:{name:'Expanding Your Skillset',count:2,text:'Everyone may play one more card this round.'},
+  cheater:{name:'The Cheater',count:2,text:'The next lemma played is proven free. Draw an extra curse after the puzzle.'},
+  combin:{name:'The Combinatorialist',count:1,text:'Take the factorial of one of your numbers.'},
+  student:{name:'The Student',count:1,text:'Everyone gets 30 more seconds in the puzzle.'},
+  tutor:{name:'The Tutor',count:1,text:'You may help anyone during the puzzle phase.'},
+  stat:{name:'The Statistician',count:1,text:'Replace any answer with the average of two answers.'},
+  crypto:{name:'The Cryptographer',count:1,text:'Use each of your prime number cards up to 3 times.'},
+  engineer:{name:'The Engineer',count:1,text:'Anyone may round their answer up or down to an integer.'},
+  topo:{name:'The Topologist',count:1,text:'Deform one number card into a homotopy-equivalent one.'},
+  algebra:{name:'The Algebraist',count:1,text:'Spend an integer card #. Your numbers work in ℤ/#ℤ.'}
+};
+const CURSE = {
+  counter:{name:'The Counterexample',count:2}, hard:{name:'Math is Hard',count:4}, prof:{name:'The Professor',count:4}
+};
+const DIFF = {
+  easy:{label:'Easy',t:90,good:Q(2),ok:Q(4),gl:'2',ol:'4'},
+  medium:{label:'Medium',t:60,good:Q(1),ok:Q(2),gl:'1',ol:'2'},
+  hard:{label:'Hard',t:30,good:Q(1,2),ok:Q(1),gl:'1/2',ol:'1'}
+};
+const HCLASS = {0:'a',4:'a',6:'a',9:'a',1:'b',2:'b',3:'b',5:'b',7:'b',8:'c'};
+
+let uid=0;
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function mk(kind,key,extra={}){ return {id:++uid,kind,key,...extra}; }
+function buildGreen(){
+  const g=[];
+  for(let i=0;i<=50;i++) for(let c=0;c<2;c++) g.push(mk('number','n',{label:String(i),v:Q(i)}));
+  for(let n=2;n<=10;n++) for(let c=0;c<2;c++) g.push(mk('number','n',{label:'1/'+n,v:Q(1,n)}));
+  for(const t in LEMMAS) for(let c=0;c<3;c++) g.push(mk('lemma',t));
+  for(const k in ASSIST) for(let c=0;c<ASSIST[k].count;c++) g.push(mk('assist',k));
+  for(const k in BONUS) for(let c=0;c<BONUS[k].count;c++) g.push(mk('bonus',k));
+  return shuffle(g);
+}
+function buildGoals(){
+  const g=[], ART_NAME={'π':'pi','τ':'tau','e':'e','φ':'phi','√2':'sqrt2'};
+  const add=(label,v,sub='')=>g.push({id:'g'+g.length,label,sub,v,art:'goal-'+(ART_NAME[label]||label)});
+  add('π',Q(314,100),'≈ 3.14'); add('τ',Q(628,100),'≈ 6.28'); add('e',Q(272,100),'≈ 2.72');
+  add('φ',Q(162,100),'≈ 1.62'); add('√2',Q(141,100),'≈ 1.41'); add('0',Q(0),'constant');
+  [[1,'0! = 1!'],[2,'2!'],[6,'3!'],[24,'4!']].forEach(([x,s])=>add(String(x),Q(x),s));
+  [3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97].forEach(x=>add(String(x),Q(x),'prime'));
+  const fun={4:'2²',8:'2³',16:'2⁴',32:'2⁵',64:'2⁶',9:'3²',27:'3³',81:'3⁴',69:'',45:'T₉',55:'T₁₀',66:'T₁₁',78:'T₁₂',91:'T₁₃',12:'',25:'5²'};
+  [4,8,16,32,64,9,27,81,69,45,55,66,78,91,12,25].forEach(x=>add(String(x),Q(x),fun[x]));
+  return shuffle(g);
+}
+function buildCurses(){ const c=[]; for(const k in CURSE) for(let i=0;i<CURSE[k].count;i++) c.push({id:'c'+c.length,key:k}); return shuffle(c); }
+const cardName = c => c.kind==='number' ? c.label : c.kind==='lemma' ? LEMMAS[c.key].name+' lemma' : c.kind==='assist' ? ASSIST[c.key].name : BONUS[c.key].name;
+const KORD = {number:0,assist:1,bonus:2,lemma:3};
+function sortHand(h){ h.sort((a,b)=> KORD[a.kind]-KORD[b.kind] || (a.kind==='number' ? cmp(a.v,b.v) : a.key.localeCompare(b.key))); }
+
+/* ================= state ================= */
+let S=null;      // game
+let W=null;      // current puzzle workspace
+let timerId=null, tidc=0;
+let setup={n:1,names:['Player 1','Player 2','Player 3','Player 4','Player 5','Player 6'],diff:'easy',timer:true,target:4,discards:2};
+try{ const saved=JSON.parse(localStorage.getItem('ft-setup')||'null'); if(saved&&saved.names) setup={...setup,...saved}; }catch(e){}
+
+function log(text,tone=''){
+  if(!S) return;
+  S.log.unshift({round:S.round,text,tone});
+  if(S.r && S.r.resolving) S.r.post.push({text,tone});
+}
+function newGame(cfg){
+  uid=0; stopWorkers();
+  if(cfg.discards==null) cfg.discards=2;
+  S={cfg,stats:[],proofSeq:0,round:1,phase:'pre',green:buildGreen(),discard:[],goals:buildGoals(),curses:buildCurses(),curseDiscard:[],
+     theorems:THEOREMS.map(([name,types],i)=>({i,name,slots:types.map(t=>({type:t,card:null})),proven:false})),
+     mathHard:[],cheaterPending:0,caught:0,lastChanceRound:null,goalsOut:false,hands:cfg.players.map(()=>[]),log:[],r:null,tab:0,outcome:null};
+  S.hands.forEach(refill);
+  preloadArt();
+  startRound();
+}
+function drawGreen(){
+  if(!S.green.length){
+    if(!S.discard.length) return null;
+    S.green=shuffle(S.discard); S.discard=[];
+    log('The green deck ran out, so the discard pile was shuffled back in.');
+  }
+  return S.green.pop();
+}
+function refill(h){ while(h.length<10){ const c=drawGreen(); if(!c) break; h.push(c); } sortHand(h); }
+function startRound(){
+  const n=S.cfg.players.length;
+  S.r={no:S.round,cursesDrawn:[],flipped:false,tosses:Array(n).fill(0),fresh:[],solve:[],acc:[],plays:Array(n).fill(0),extra:0,played:[],lemmas:[],cheaters:0,second:0,office:0,student:0,tutors:[],stat:0,engineer:0,
+       eff:S.cfg.players.map(()=>({fact:0,deform:0,crypto:false,mods:[]})),goals:[],goal:null,turn:0,results:[],score:null,
+       resolving:false,resolved:false,post:[]};
+  S.phase='pre'; S.tab=0; W=null;
+  log(`Round ${S.round} begins.`,'round');
+  render();
+}
+function required(){ const n=S.cfg.players.length; return Math.max(0,5*n-2-S.r.office+2*S.mathHard.length); }
+function removeFromHand(p,c){ const h=S.hands[p]; const i=h.indexOf(c); if(i>=0) h.splice(i,1); }
+function openSlots(type){ const out=[]; for(const t of S.theorems){ if(t.proven) continue; for(const s of t.slots) if(s.type===type&&!s.card) out.push({t,s}); } return out; }
+function lemmaUseful(type){ return openSlots(type).length - S.r.lemmas.filter(l=>l.key===type).length > 0; }
+function filledUnproven(){ const out=[]; for(const t of S.theorems){ if(t.proven) continue; for(const s of t.slots) if(s.card) out.push({t,s}); } return out; }
+const provenCount = () => S.theorems.filter(t=>t.proven).length;
+
+async function proveLemma(c){
+  const slots=openSlots(c.key), L=LEMMAS[c.key].name;
+  if(!slots.length){ S.discard.push(c); log(`No theorem needs a ${L} lemma any more, so it was discarded.`); return; }
+  const ths=[...new Set(slots.map(s=>s.t))];
+  let t=ths[0];
+  if(ths.length>1) t=await choose(`Prove a ${L} lemma`,'Which theorem should this lemma count toward?',
+    ths.map(t=>({label:t.name,value:t,desc:`${t.slots.filter(s=>s.card).length} of 2 lemmas proven`})));
+  const slot=t.slots.find(s=>s.type===c.key&&!s.card);
+  slot.card=c; slot.at=++S.proofSeq; // proof order, for The Professor
+  log(`${L} lemma proven for ${t.name}.`,'good');
+  if(t.slots.every(s=>s.card)){ t.proven=true; log(`${t.name} is proven. Q.E.D.`,'good'); }
+  if(provenCount()>=S.cfg.target) endGame(true,`You proved ${provenCount()} of the 5 theorems.`);
+}
+function endGame(win,reason){
+  clearInterval(timerId); W=null; closeModal(null);
+  S.phase='over'; S.outcome={win,reason};
+  log(win?'The cohort graduates. Congratulations, doctors.':reason, win?'good':'bad');
+  render();
+}
+
+/* ================= pre-puzzle phase ================= */
+function cantPlay(p,c){
+  if(S.r.plays[p]>=1+S.r.extra) return 'Limit reached';
+  if(c.kind==='lemma'&&!lemmaUseful(c.key)) return 'Not needed';
+  if(c.kind==='bonus'&&c.key==='algebra'&&!S.hands[p].some(x=>x.kind==='number'&&isInt(x.v)&&x.v.n>=1n)) return 'Needs an integer';
+  return '';
+}
+function tossInfo(p,c){
+  if(c.kind==='lemma'&&openSlots(c.key).length===0) return {free:true};
+  if(S.r.tosses[p]<S.cfg.discards) return {free:false};
+  return null;
+}
+function tossCard(p,id){
+  const c=S.hands[p].find(x=>x.id===id), t=c&&tossInfo(p,c);
+  if(!t) return;
+  removeFromHand(p,c); if(!t.free) S.r.tosses[p]++;
+  const nc=drawGreen(); S.discard.push(c);
+  if(nc){ S.hands[p].push(nc); sortHand(S.hands[p]); S.r.fresh.push(nc.id); }
+  log(`${S.cfg.players[p]} discarded ${cardName(c)}${t.free?' (no theorem needs it)':''} and ${nc?'drew a replacement':'had nothing to draw'}.`);
+  render();
+}
+async function playCard(p,id){
+  const h=S.hands[p], c=h.find(x=>x.id===id), r=S.r, nm=S.cfg.players[p];
+  if(!c||cantPlay(p,c)) return;
+  if(c.kind==='lemma'){
+    removeFromHand(p,c); r.plays[p]++; r.played.push({p,c});
+    const L=LEMMAS[c.key].name;
+    if(S.cheaterPending>0){
+      S.cheaterPending--;
+      log(`${nm} played a ${L} lemma. The Cheater proves it immediately.`,'warn');
+      await proveLemma(c);
+      if(S.phase==='over') return;
+    } else { r.lemmas.push(c); log(`${nm} played a ${L} lemma. Pass the puzzle to prove it.`); }
+    render(); return;
+  }
+  if(c.key==='algebra'){
+    const opts=h.filter(x=>x.kind==='number'&&isInt(x.v)&&x.v.n>=1n);
+    const m=await choose('The Algebraist','Pick the integer card # that sets your modulus. That card is used up, and you work in ℤ/#ℤ during the puzzle.',opts.map(o=>({label:o.label,value:o})),true);
+    if(!m) return;
+    removeFromHand(p,m); S.discard.push(m); r.eff[p].mods.push(m.v);
+    log(`${nm} played The Algebraist with ${m.label}. Their numbers work in ℤ/${m.label}ℤ this round.`);
+  }
+  removeFromHand(p,c); S.discard.push(c); r.plays[p]++; r.played.push({p,c});
+  switch(c.key){
+    case 'office': r.office++; log(`${nm} went to Office Hours. The pass mark drops by 1 this round.`,'good'); break;
+    case 'second': r.second++; log(`${nm} played A Second Option. An extra goal card will be drawn.`); break;
+    case 'easy':
+      if(S.mathHard.length){ S.curseDiscard.push(S.mathHard.pop()); log(`${nm} played Math is Easy and removed a Math is Hard curse.`,'good'); }
+      else log(`${nm} played Math is Easy. No Math is Hard curse was in play.`);
+      break;
+    case 'expand': r.extra++; log(`${nm} is Expanding Their Skillset. Everyone may play one more card this round.`,'good'); break;
+    case 'cheater': S.cheaterPending++; r.cheaters++; log(`${nm} played The Cheater. The next lemma played is proven free, and you draw an extra curse after the puzzle.`,'warn'); break;
+    case 'combin': r.eff[p].fact++; log(`${nm} played The Combinatorialist and may take one factorial.`); break;
+    case 'student': r.student++; log(`${nm} played The Student. Everyone gets 30 more seconds.`,'good'); break;
+    case 'tutor': r.tutors.push(p); log(`${nm} played The Tutor and may help anyone during the puzzle.`); break;
+    case 'stat': r.stat++; log(`${nm} played The Statistician.`); break;
+    case 'crypto': r.eff[p].crypto=true; log(`${nm} played The Cryptographer. Their primes can be used up to 3 times.`); break;
+    case 'engineer': r.engineer++; log(`${nm} played The Engineer. Anyone may round their answer to an integer.`); break;
+    case 'topo': r.eff[p].deform++; log(`${nm} played The Topologist and may deform one number card.`); break;
+  }
+  render();
+}
+function toGoal(){
+  const r=S.r, k=1+r.second;
+  for(let i=0;i<k&&S.goals.length;i++) r.goals.push(S.goals.pop());
+  if(!S.goals.length&&!S.goalsOut){ S.goalsOut=true; log('That was the last goal card. Win this round or the game ends.','bad'); }
+  if(r.goals.length===1){ r.goal=r.goals[0]; log(`Goal card: ${r.goal.label}${r.goal.sub.startsWith('≈')?' '+r.goal.sub:''}.`); }
+  S.phase='goal'; render();
+}
+function pickGoal(i){ const r=S.r; r.goal=r.goals[i]; log(`The team chose goal ${r.goal.label} (from ${r.goals.map(g=>g.label).join(', ')}).`); render(); }
+
+/* ================= puzzle phase ================= */
+const timeFor = () => DIFF[S.cfg.diff].t + 30*S.r.student;
+const tileById = tid => W.tiles.find(t=>t.tid===tid);
+const personalGoal = () => W && W.koch ? Q(4,3) : S.r.goal.v;
+function startTurn(){
+  const p=S.r.turn, eff=S.r.eff[p];
+  const tiles=S.hands[p].filter(c=>c.kind==='number').map(c=>({tid:++tidc,v:c.v,label:c.label,expr:c.label,cards:[c.id],orig:true,note:'',uses:eff.crypto&&isPrimeQ(c.v)?3:1}));
+  W={p,tiles,sel:[],used:[],fact:eff.fact,deform:eff.deform,mods:eff.mods,koch:null,hist:[],msg:'',end:S.cfg.timer?Date.now()+timeFor()*1000:null};
+  clearInterval(timerId);
+  if(W.end) timerId=setInterval(tick,250);
+  startSolve(p);
+  render();
+}
+function mmss(s){ return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+function tick(){
+  if(!W||!W.end) return;
+  const left=Math.max(0,Math.ceil((W.end-Date.now())/1000));
+  const el=document.getElementById('timer');
+  if(el){ el.textContent=mmss(left); el.classList.toggle('low',left<=10); }
+  if(left<=0){ closeModal(null); log(`${S.cfg.players[W.p]}’s time ran out.`,'warn'); finish(closestTile()); }
+}
+function closestTile(){
+  if(!W.tiles.length) return null;
+  const g=personalGoal();
+  return W.tiles.reduce((best,t)=> !best || cmp(absQ(sub(t.v,g)),absQ(sub(best.v,g)))<0 ? t : best, null);
+}
+function snapshot(){ W.hist.push(structuredClone({tiles:W.tiles,used:W.used,fact:W.fact,deform:W.deform,koch:W.koch})); }
+function undo(){ const s=W.hist.pop(); if(!s) return; Object.assign(W,s); W.sel=[]; W.pendingOp=null; W.msg=''; render(); }
+function resetWS(){ if(!W.hist.length) return; const s=W.hist[0]; W.hist=[]; Object.assign(W,s); W.sel=[]; W.pendingOp=null; W.msg=''; render(); }
+function say(m){ W.msg=m; render(); }
+function consume(tid){ const t=tileById(tid); if(!t) return; t.uses--; if(t.uses<=0) W.tiles=W.tiles.filter(x=>x!==t); }
+const uniq = a => [...new Set(a)];
+function clickTile(tid){
+  const t=tileById(tid); if(!t) return;
+  const cnt=W.sel.filter(x=>x===tid).length;
+  if(W.pendingOp&&W.sel.length===1){
+    const op=W.pendingOp; W.pendingOp=null;
+    if(cnt>0&&t.uses<2){ W.sel=[]; W.msg=''; return render(); }
+    W.sel.push(tid); return binop(op);
+  }
+  if(cnt>0){ if(cnt<t.uses&&W.sel.length<2) W.sel.push(tid); else W.sel=W.sel.filter(x=>x!==tid); }
+  else { if(W.sel.length>=2) W.sel=[W.sel[1]]; W.sel.push(tid); }
+  W.pendingOp=null; W.msg=''; render();
+}
+const OPS = {'+':{s:'+',f:add},'-':{s:'−',f:sub},'*':{s:'×',f:mul},'/':{s:'÷',f:div},'^':{s:'^',f:pow}};
+function binop(op){
+  if(W.sel.length===1){ W.pendingOp=W.pendingOp===op?null:op; W.msg=''; return render(); }
+  if(W.sel.length!==2) return say('Tap a number first, then an operation, then the second number.');
+  W.pendingOp=null;
+  const [a,b]=W.sel.map(tileById); let v;
+  try{ v=OPS[op].f(a.v,b.v); }catch(e){ W.sel=[a.tid]; return say(e.message); }
+  snapshot(); consume(a.tid); consume(b.tid);
+  const nt={tid:++tidc,v,expr:`(${a.expr} ${OPS[op].s} ${b.expr})`,cards:uniq([...a.cards,...b.cards]),orig:false,note:'',uses:1};
+  W.tiles.push(nt); W.sel=[nt.tid]; W.msg=''; render();
+}
+function unary(fn,exprFn,cardId,after){
+  if(W.sel.length!==1) return say('Select exactly one number first.');
+  const a=tileById(W.sel[0]); let v;
+  try{ v=fn(a.v); }catch(e){ return say(e.message); }
+  snapshot(); consume(a.tid);
+  const nt={tid:++tidc,v,expr:exprFn(a.expr),cards:uniq([...a.cards,...(cardId?[cardId]:[])]),orig:false,note:'',uses:1};
+  W.tiles.push(nt); W.sel=[nt.tid]; if(cardId) W.used.push(cardId); if(after) after(); W.msg=''; render();
+}
+async function useAssist(id){
+  const c=S.hands[W.p].find(x=>x.id===id); if(!c||W.used.includes(id)) return;
+  switch(c.key){
+    case 'square': return unary(a=>mul(a,a),e=>`(${e})²`,id);
+    case 'triangle': return unary(a=>{ if(!isInt(a)) throw new Error('The Triangle only works on an integer.'); return Q(a.n*(a.n+1n)/2n); },e=>`T(${e})`,id);
+    case 'geo': return unary(a=>{ if(!(cmp(a,Q(0))>0&&cmp(a,Q(1))<0)) throw new Error('The geometric series needs a number strictly between 0 and 1.'); return div(Q(1),sub(Q(1),a)); },e=>`1/(1−${e})`,id);
+    case 'quotient': {
+      if(W.sel.length!==2) return say('Quotient map: select the card to change, then the card it becomes.');
+      const [a,b]=W.sel.map(tileById);
+      if(a===b||!a.orig||!b.orig) return say('Quotient map only works on two different number cards from your hand, not on results.');
+      snapshot(); consume(a.tid);
+      const nt={tid:++tidc,v:b.v,expr:`${a.expr}↦${b.expr}`,cards:uniq([...a.cards,id]),orig:false,note:'',uses:1};
+      W.tiles.push(nt); W.used.push(id); W.sel=[nt.tid]; W.msg=''; return render();
+    }
+    case 'seems': {
+      const v=await askText('Seems to work','Choose any integer from 0 to 20.','e.g. 16',s=>{ const x=parseNum(s); return x&&isInt(x)&&x.n>=0n&&x.n<=20n?{value:x}:{err:'Enter a whole number from 0 to 20.'}; });
+      if(!v||!W) return;
+      snapshot();
+      const nt={tid:++tidc,v,expr:`⟨${fmt(v)}⟩`,cards:[id],orig:false,note:'wild card',uses:1};
+      W.tiles.push(nt); W.used.push(id); W.sel=[nt.tid]; W.msg=''; return render();
+    }
+    case 'koch': snapshot(); W.koch=id; W.used.push(id); W.msg='Koch snowflake: your personal goal is now 4/3.'; return render();
+  }
+}
+async function useFactorial(){ if(W.fact<1) return; unary(factorial,e=>`(${e})!`,null,()=>{W.fact--;}); }
+async function useDeform(){
+  if(W.deform<1) return;
+  if(W.sel.length!==1) return say('Select one number card to deform.');
+  const t=tileById(W.sel[0]);
+  if(!t.orig) return say('The Topologist only deforms a number card, not a result.');
+  const from=t.label;
+  const v=await askText('The Topologist',`Deform ${from} digit by digit. Digits in the same class are interchangeable: {0, 4, 6, 9}, {1, 2, 3, 5, 7}, {8}.`,'e.g. 50',s=>{
+    s=s.trim(); if(s.length!==from.length) return {err:`Keep the same number of digits as ${from}.`};
+    for(let i=0;i<s.length;i++){ const f=from[i],g=s[i]; if(f==='/'||g==='/'){ if(f!==g) return {err:'Keep the fraction bar in the same place.'}; continue; } if(!(f in HCLASS)||!(g in HCLASS)||HCLASS[f]!==HCLASS[g]) return {err:`${g} isn’t homotopy equivalent to ${f}.`}; }
+    const x=parseNum(s); return x?{value:{x,s}}:{err:'That isn’t a valid number.'};
+  });
+  if(!v||!W) return;
+  const tt=tileById(t.tid); if(!tt) return;
+  snapshot(); const t2=tileById(t.tid);
+  t2.note=`deformed from ${from}`; t2.v=v.x; t2.label=v.s; t2.expr=v.s; W.deform--; W.msg=''; render();
+}
+async function useShift(){
+  if(!W.mods.length) return;
+  if(W.sel.length!==1) return say('Select one number to swap for another representative.');
+  const t=tileById(W.sel[0]); const m=W.mods[0];
+  if(!t.v.e) return say('The Algebraist only works on exact numbers, not approximations.');
+  const v=await askText(`The Algebraist · ℤ/${fmt(m)}ℤ`,`Replace ${fmt(t.v)} with any number that differs from it by a multiple of ${fmt(m)}.`,'e.g. 6',s=>{
+    const x=parseNum(s); if(!x) return {err:'Enter a number like 6, −1 or 1/3.'};
+    const k=div(sub(t.v,x),m); return isInt(k)?{value:x}:{err:`${fmt(x)} isn’t in the same class as ${fmt(t.v)} mod ${fmt(m)}.`};
+  });
+  if(!v||!W||!tileById(t.tid)) return;
+  snapshot(); const t2=tileById(t.tid);
+  t2.expr=`[${t2.expr}≡${fmt(v)}]`; t2.v=v; if(t2.orig) t2.note=`≡ mod ${fmt(m)}`; W.msg=''; render();
+}
+function submit(){
+  if(W.sel.length===1) return finish(tileById(W.sel[0]));
+  finish(closestTile());
+}
+function finish(t){
+  clearInterval(timerId);
+  const p=W.p, nm=S.cfg.players[p];
+  const res={p,v:t?t.v:null,expr:t?stripOuter(t.expr):'—',goal:personalGoal(),koch:!!W.koch,cards:t?t.cards:[]};
+  const ids=new Set(res.cards); if(W.koch) ids.add(W.koch);
+  for(const c of [...S.hands[p]]) if(ids.has(c.id)){ removeFromHand(p,c); S.discard.push(c); }
+  S.r.results[p]=res;
+  computeAccuracy(S.r,p);
+  log(`${nm} answered ${t?fmt(t.v):'nothing'}${W.koch?' (personal goal 4/3)':''}.`);
+  W=null; S.r.turn++;
+  if(S.r.turn>=S.cfg.players.length) scoreRound();
+  render();
+}
+function stripOuter(e){ if(e[0]!=='('||e[e.length-1]!==')') return e; let d=0; for(let i=0;i<e.length;i++){ if(e[i]==='(') d++; else if(e[i]===')'){ d--; if(d===0&&i<e.length-1) return e; } } return e.slice(1,-1); }
+
+/* ================= best-answer search ================= */
+// Self-contained so it can run inside a Web Worker. Floats for speed; tolerance 1e-9.
+// Stage 1 (up to m.phase1 ms): every way to combine the hand's numbers (any subset, any order,
+//   + − × ÷ ^, plus the unary assists), simplest first, stopping at an exact hit.
+// Stage 2 (rest of m.budget ms), only if stage 1 found no exact answer: the same search over every
+//   hand Quotient map and the Topologist can make, with the Algebraist's mod shift on each result.
+function solverMain(m,report){
+  const t0=Date.now(), EPS=1e-9, LIM=1e7, targets=m.targets, wildOn=m.wild>0, STOP={};
+  const sp=m.sp||{quot:0,topo:0,mods:[]};
+  let nodes=0, memo=true, deadline=0, timed=false, mods=[], phase=1, lastRep=t0;
+  let best={d:Infinity,v:null,e:'',t:targets[0],ph:1};
+  const seen=new Map();
+  const ok=v=>Number.isFinite(v)&&Math.abs(v)<=LIM;
+  const UN=[v=>v*v,
+    v=>{const r=Math.round(v);return Math.abs(v-r)<1e-9?r*(r+1)/2:null},
+    v=>(v>0&&v<1)?1/(1-v):null,
+    v=>{const r=Math.round(v);if(Math.abs(v-r)>1e-9||r<0||r>12)return null;let f=1;for(let i=2;i<=r;i++)f*=i;return f}];
+  const UNE=[e=>`(${e})²`,e=>`T(${e})`,e=>`1/(1−${e})`,e=>`(${e})!`];
+  const fmtN=v=>{ if(Math.abs(v-Math.round(v))<1e-9) return String(Math.round(v)); for(let d=2;d<=100;d++){ const k=Math.round(v*d); if(Math.abs(v*d-k)<1e-9) return k+'/'+d; } return v.toFixed(4); };
+  const take=(d,v,e,t)=>{ if(d<best.d-1e-12) best={d,v,e,t,ph:phase}; };
+  function consider(v,e){
+    for(const t of targets){
+      take(Math.abs(v-t),v,e,t);
+      if(wildOn){ // Seems to work, used as the last step
+        for(const [x,op] of [[t-v,'+'],[v-t,'−'],[t+v,'r'],[v!==0?t/v:NaN,'×'],[t!==0?v/t:NaN,'÷']]){
+          if(!Number.isFinite(x)) continue;
+          const w=Math.min(20,Math.max(0,Math.round(x)));
+          const r=op==='+'?v+w:op==='−'?v-w:op==='r'?w-v:op==='×'?v*w:(w===0?NaN:v/w);
+          if(!Number.isFinite(r)) continue;
+          const we='⟨'+w+'⟩';
+          take(Math.abs(r-t),r,op==='r'?`(${we} − ${e})`:`(${e} ${op} ${we})`,t);
+        }
+      }
+      for(const M of mods){ // Algebraist: swap the result for the representative of its class closest to the goal
+        const k=Math.round((t-v)/M); if(!k||!Number.isFinite(k)) continue;
+        const r=v+k*M; take(Math.abs(r-t),r,`[${e} ≡ ${fmtN(r)} mod ${fmtN(M)}]`,t);
+      }
+    }
+    if(best.d<EPS) throw STOP;
+  }
+  function rec(vals,exprs,u,left){
+    if((++nodes&1023)===0){
+      const now=Date.now();
+      if(now>deadline){ timed=true; throw STOP; }
+      if(report&&now-lastRep>1000){ lastRep=now; report({d:best.d,v:best.v,e:best.e,t:best.t,ph:best.ph,phase,elapsed:now-t0}); }
+    }
+    if(left<=0) return;
+    const n=vals.length;
+    if(memo){
+      const key=vals.map(x=>x.toPrecision(12)).sort().join(',')+'|'+u.join('');
+      const prev=seen.get(key); if(prev!==undefined&&prev>=left) return;
+      seen.set(key,left); if(seen.size>1000000){ memo=false; seen.clear(); }
+    }
+    for(let k=0;k<4;k++){ if(!u[k]) continue;
+      for(let i=0;i<n;i++){ const r=UN[k](vals[i]); if(r===null||!ok(r)) continue;
+        const e=UNE[k](exprs[i]); consider(r,e);
+        const nv=vals.slice(), ne=exprs.slice(), nu=u.slice(); nv[i]=r; ne[i]=e; nu[k]--; rec(nv,ne,nu,left-1); } }
+    for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){
+      const a=vals[i], b=vals[j], ea=exprs[i], eb=exprs[j], rv=[], re=[];
+      for(let k=0;k<n;k++) if(k!==i&&k!==j){ rv.push(vals[k]); re.push(exprs[k]); }
+      const go=(r,e)=>{ if(!ok(r)) return; consider(r,e); rv.push(r); re.push(e); rec(rv,re,u,left-1); rv.pop(); re.pop(); };
+      go(a+b,`(${ea} + ${eb})`); go(a*b,`(${ea} × ${eb})`);
+      go(a-b,`(${ea} − ${eb})`); if(a!==b) go(b-a,`(${eb} − ${ea})`);
+      if(b!==0) go(a/b,`(${ea} ÷ ${eb})`); if(a!==0&&a!==b) go(b/a,`(${eb} ÷ ${ea})`);
+      if(Math.abs(b)<=16) go(Math.pow(a,b),`(${ea} ^ ${eb})`); if(Math.abs(a)<=16&&a!==b) go(Math.pow(b,a),`(${eb} ^ ${ea})`);
+    }
+  }
+  // Iterative deepening over one or more hands: all 1-step answers in every hand, then 2-step, ...
+  // Returns true if everything was searched before the deadline.
+  function run(hands){
+    timed=false;
+    try{
+      for(const h of hands) for(let i=0;i<h.v.length;i++) consider(h.v[i],h.e[i]);
+      const us=m.un.reduce((a,b)=>a+b,0), maxN=Math.max(0,...hands.map(h=>h.v.length));
+      for(let L=1;L<=maxN-1+us;L++){ seen.clear(); memo=true; for(const h of hands) rec(h.v,h.e,m.un.slice(),L); }
+    }catch(x){ if(x!==STOP) throw x; }
+    return !timed;
+  }
+  const CL={0:'0469',4:'0469',6:'0469',9:'0469',1:'12357',2:'12357',3:'12357',5:'12357',7:'12357',8:'8'};
+  function deforms(lab){
+    let outs=[''];
+    for(const ch of lab){ const opts=ch==='/'?'/':(CL[ch]||ch), nx=[]; for(const o of outs) for(const c of opts) nx.push(o+c); outs=nx; }
+    return outs.filter(s=>s!==lab);
+  }
+  const parseLab=s=>{ const i=s.indexOf('/'); if(i<0) return Number(s); const d=Number(s.slice(i+1)); return d===0?null:Number(s.slice(0,i))/d; };
+  function variants(base){
+    const keys=new Set(), out=[], hk=h=>h.v.map(x=>x.toPrecision(12)).sort().join(',');
+    const clone=h=>({v:h.v.slice(),e:h.e.slice(),lab:h.lab.slice(),card:h.card.slice()});
+    const add=(h,arr)=>{ if(out.length>=4000) return; const k=hk(h); if(keys.has(k)) return; keys.add(k); arr.push(h); out.push(h); };
+    keys.add(hk(base));
+    let pool=[base];
+    for(let k=0;k<sp.topo;k++){ const nx=[];
+      for(const h of pool) for(let i=0;i<h.v.length;i++){ if(!h.card[i]||!h.lab[i]) continue;
+        for(const nl of deforms(h.lab[i])){ const nv=parseLab(nl); if(nv==null||!Number.isFinite(nv)) continue;
+          const h2=clone(h); h2.v[i]=nv; h2.e[i]=`${h.lab[i]}≃${nl}`; h2.lab[i]=null; add(h2,nx); } }
+      pool=pool.concat(nx); }
+    for(let k=0;k<sp.quot;k++){ const nx=[];
+      for(const h of pool) for(let i=0;i<h.v.length;i++) for(let j=0;j<h.v.length;j++){
+        if(i===j||!h.card[i]||!h.card[j]||h.v[i]===h.v[j]) continue;
+        const h2=clone(h); h2.v[i]=h.v[j]; h2.e[i]=`${h.e[i]}↦${h.e[j]}`; h2.card[i]=false; h2.lab[i]=null; add(h2,nx); }
+      pool=pool.concat(nx); }
+    return out;
+  }
+  const base={v:m.items.map(x=>x.v),e:m.items.map(x=>x.e),lab:m.items.map(x=>x.lab||null),card:m.items.map(()=>true)};
+  if(wildOn) for(const t of targets){ const w=Math.min(20,Math.max(0,Math.round(t))); take(Math.abs(w-t),w,'⟨'+w+'⟩',t); }
+  deadline=t0+m.phase1;
+  const complete1=best.d<EPS||run([base]);
+  let ran2=false, complete2=true, variantCount=0;
+  if(best.d>=EPS&&(sp.quot||sp.topo||sp.mods.length)&&Date.now()<t0+m.budget){
+    phase=2; ran2=true; mods=sp.mods;
+    const hands=variants(base); variantCount=hands.length;
+    if(mods.length) hands.unshift(base);
+    deadline=t0+m.budget;
+    complete2=run(hands);
+  }
+  return {d:best.d,v:best.v,e:best.e,t:best.t,ph:best.ph,complete:complete1&&complete2,complete1,ran2,variantCount,nodes,ms:Date.now()-t0};
+}
+const SEARCH_MS=30000, STAGE1_MS=10000;
+const workers=[];
+let solverURLCache=null;
+function stopWorkers(){ workers.splice(0).forEach(w=>{ try{ w.terminate(); }catch(e){} }); }
+function solverURL(){ return solverURLCache||(solverURLCache=URL.createObjectURL(new Blob([`self.onmessage=e=>{ const res=(${solverMain.toString()})(e.data,p=>postMessage({progress:p})); postMessage({done:res}); };`],{type:'text/javascript'}))); }
+function startSolve(p){
+  const G=S, r=S.r, h=S.hands[p], eff=r.eff[p];
+  const items=[];
+  for(const c of h) if(c.kind==='number'){ const k=eff.crypto&&isPrimeQ(c.v)?3:1; for(let i=0;i<k;i++) items.push({v:num(c.v),e:c.label,lab:c.label}); }
+  const cnt=k=>h.filter(c=>c.kind==='assist'&&c.key===k).length;
+  const msg={items,un:[cnt('square'),cnt('triangle'),cnt('geo'),eff.fact],wild:cnt('seems'),targets:[num(r.goal.v),...(cnt('koch')?[4/3]:[])],
+    sp:{quot:cnt('quotient'),topo:eff.deform,mods:eff.mods.map(num)},budget:SEARCH_MS,phase1:STAGE1_MS};
+  r.solve[p]={status:'running',started:Date.now()};
+  let settled=false;
+  const done=res=>{ if(settled) return; settled=true; if(S!==G) return; r.solve[p]={status:'done',...res}; computeAccuracy(r,p); if(!W) render(); };
+  const fallback=()=>setTimeout(()=>done(solverMain({...msg,budget:600,phase1:300})),0);
+  try{
+    const w=new Worker(solverURL()); workers.push(w);
+    w.onmessage=e=>{
+      if(e.data.progress){ if(!settled&&S===G){ r.solve[p].progress=e.data.progress; if(!W&&(S.phase==='results'||S.phase==='over')) render(); } return; }
+      w.terminate(); done(e.data.done);
+    };
+    w.onerror=e=>{ if(e&&e.preventDefault) e.preventDefault(); w.terminate(); fallback(); };
+    w.postMessage(msg);
+  }catch(e){ fallback(); }
+}
+function fmtF(v){ if(v==null) return '—'; try{ return fmt(F(v)); }catch(e){ return dec(v); } }
+function computeAccuracy(r,p){
+  const res=r.results[p], sol=r.solve[p];
+  if(!res||!sol||sol.status!=='done') return;
+  // score = max(100·(1 − |yours − best| / |best|), 0), one decimal.
+  // "best" is taken on your side of your goal at the best distance found, so an answer just as
+  // close on the other side of the goal still scores 100. A best of exactly 0 divides by 1 instead.
+  const g=num(res.goal);
+  const dMine=res.v?num(absQ(sub(res.v,res.goal))):Infinity;
+  const gap=Math.max(0,dMine-sol.d);
+  let score=0;
+  if(res.v){
+    const mine=num(res.v), bestEq=g+(mine>=g?1:-1)*(Number.isFinite(sol.d)?sol.d:0);
+    const denom=Math.abs(bestEq)<1e-9?1:Math.abs(bestEq);
+    score=Math.round(Math.max(0,100*(1-gap/denom))*10)/10;
+  }
+  r.acc[p]={score,beat:dMine<sol.d-1e-9};
+  const entry={round:r.no,p,goal:r.goal.label,mine:res.v?fmt(res.v):'—',mineExpr:res.v?res.expr:'',best:fmtF(sol.v),bestExpr:stripOuter(sol.e||''),bestExact:sol.d<1e-9,beat:r.acc[p].beat,score};
+  const i=S.stats.findIndex(s=>s.round===r.no&&s.p===p);
+  if(i>=0) S.stats[i]=entry; else S.stats.push(entry);
+}
+const band = s => s>=90?'s-hi':s>=50?'s-mid':'s-lo';
+const avg = a => a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length*10)/10:null;
+const s1 = s => s==null?'—':s===100?'100':s.toFixed(1);
+function scorecardHTML(){
+  const n=S.cfg.players.length, st=S.stats;
+  if(!st.length) return '<p class="muted">No rounds have been scored yet. Scores appear after each puzzle phase.</p>';
+  const rounds=[...new Set(st.map(s=>s.round))].sort((a,b)=>a-b);
+  const tiles=S.cfg.players.map((nm,p)=>{ const ss=st.filter(s=>s.p===p).map(s=>s.score); const a=avg(ss);
+    return `<div class="stat"><span class="stat-v">${s1(a)}</span><span class="stat-l">${n>1?esc(nm)+' · ':''}average score over ${ss.length} round${ss.length===1?'':'s'}</span></div>`; });
+  const perfect=st.filter(s=>s.score===100).length;
+  if(n>1) tiles.push(`<div class="stat"><span class="stat-v">${s1(avg(st.map(s=>s.score)))}</span><span class="stat-l">Team average</span></div>`);
+  tiles.push(`<div class="stat"><span class="stat-v">${perfect}</span><span class="stat-l">answers that matched the best found</span></div>`);
+  const cell=s=>s?`<span class="score ${band(s.score)}">${s1(s.score)}</span><div class="minibar ${band(s.score)}"><span style="width:${s.score}%"></span></div>`:'<span class="muted">…</span>';
+  let head,body;
+  if(n===1){
+    head='<tr><th>Round</th><th>Goal</th><th>Your answer</th><th>Best found</th><th>Score</th></tr>';
+    body=rounds.map(rd=>{ const s=st.find(x=>x.round===rd); return `<tr><td class="num">${rd}</td><td class="num">${esc(s.goal)}</td>
+      <td><span class="mono">${esc(s.mine)}</span><div class="expr">${esc(s.mineExpr)}</div></td>
+      <td><span class="mono">${esc(s.best)}</span><div class="expr">${esc(s.bestExpr)}</div></td><td>${cell(s)}</td></tr>`; }).join('');
+  } else {
+    head=`<tr><th>Round</th><th>Goal</th>${S.cfg.players.map(nm=>`<th>${esc(nm)}</th>`).join('')}<th>Round average</th></tr>`;
+    body=rounds.map(rd=>{ const row=st.filter(x=>x.round===rd);
+      return `<tr><td class="num">${rd}</td><td class="num">${esc(row[0].goal)}</td>${S.cfg.players.map((_,p)=>{ const s=row.find(x=>x.p===p); return `<td>${cell(s)}${s?`<div class="expr">${esc(s.mine)} vs ${esc(s.best)}</div>`:''}</td>`; }).join('')}
+        <td class="num">${s1(avg(row.map(s=>s.score)))}</td></tr>`; }).join('');
+  }
+  return `<div class="stats">${tiles.join('')}</div>
+    <div class="table-wrap full"><table><thead>${head}</thead><tbody>${body}</tbody></table></div>
+    <p class="muted" style="font-size:13px">${SCORE_NOTE()}</p>`;
+}
+const SCORE_NOTE=()=>`Score = max(100 × (1 − |your answer − best| ÷ best), 0), where best is the best answer the search found in your hand. 100 means you matched it; being off by the full size of the best answer scores 0. For example, with a best of 97, an answer of 95 scores 97.9.`;
+
+/* ================= scoring & resolution ================= */
+function rate(v,g){
+  if(!v) return {tier:'No answer',k:'none',pts:0,d:null};
+  const d=absQ(sub(v,g)), L=DIFF[S.cfg.diff];
+  if(isZero(d)) return {tier:'Perfect',k:'perfect',pts:10,d};
+  if(cmp(d,L.good)<=0) return {tier:'Good',k:'good',pts:6,d};
+  if(cmp(d,L.ok)<=0) return {tier:'OK',k:'ok',pts:2,d};
+  return {tier:'Poor',k:'poor',pts:0,d};
+}
+function scoreRound(){
+  const R=S.r.results, n=R.length;
+  const bestFor=vals=>vals.map((v,i)=>{
+    const cands=[{v,how:''}];
+    if(S.r.engineer&&v&&!isInt(v)){ const f=floorQ(v); cands.push({v:f,how:'rounded down'},{v:add(f,Q(1)),how:'rounded up'}); }
+    let best=null; for(const c of cands){ const r=rate(c.v,R[i].goal); if(!best||r.pts>best.r.pts) best={...c,r}; } return best;
+  });
+  const total=f=>f.reduce((s,x)=>s+x.r.pts,0);
+  let plan={stat:null,final:bestFor(R.map(r=>r.v))}, tot=total(plan.final);
+  if(S.r.stat&&n>=2){
+    for(let a=0;a<n;a++) for(let b=a+1;b<n;b++){
+      if(!R[a].v||!R[b].v) continue;
+      const avg=div(add(R[a].v,R[b].v),Q(2));
+      for(let t=0;t<n;t++){ const vals=R.map(r=>r.v); vals[t]=avg; const f=bestFor(vals), tt=total(f); if(tt>tot){ tot=tt; plan={stat:{a,b,t,avg},final:f}; } }
+    }
+  }
+  const need=required();
+  S.r.score={plan,total:tot,need,pass:tot>=need};
+  S.phase='results';
+  log(`Puzzle phase: ${tot} of ${need} points. ${tot>=need?'Passed.':'Not passed.'}`,tot>=need?'good':'bad');
+}
+// Discards up to k proven lemmas from unproven theorems (lemmas in a proven theorem are locked).
+// newestFirst takes the most recently proven ones, as The Professor's card says; otherwise the players choose.
+async function discardLemmas(k,src,newestFirst=false){
+  for(let i=0;i<k;i++){
+    const opts=filledUnproven();
+    if(!opts.length){ log(`${src}: there are no proven lemmas on unproven theorems to discard.`); return; }
+    let o=opts[0];
+    if(newestFirst) o=opts.reduce((a,b)=>(b.s.at||0)>(a.s.at||0)?b:a);
+    else if(opts.length>1) o=await choose(`${src}: discard a proven lemma${k>1?` (${i+1} of ${k})`:''}`,'Choose a lemma from an unproven theorem. It goes back into the deck.',
+      opts.map(o=>({label:`${LEMMAS[o.s.type].name} lemma`,desc:o.t.name,value:o})));
+    S.discard.push(o.s.card); o.s.card=null; o.s.at=0;
+    log(`${src}: the ${newestFirst?'most recently proven ':''}${LEMMAS[o.s.type].name} lemma for ${o.t.name} was discarded.`,'bad');
+  }
+}
+async function drawCurse(){
+  if(!S.curses.length){ log('No curse cards remain to draw.'); return; }
+  const c=S.curses.pop();
+  S.r.cursesDrawn.push(c.key);
+  if(!S.curses.length&&S.lastChanceRound===null){ S.lastChanceRound=S.round+1; log('That was the last curse card. Next round is your final chance to win.','bad'); }
+  if(c.key==='hard'){ S.mathHard.push(c); log('Curse: Math is Hard. The pass mark is 2 higher until someone plays Math is Easy.','bad'); return; }
+  S.curseDiscard.push(c);
+  if(c.key==='counter'){ log('Curse: The Counterexample. Your last lemma was flawed.','bad'); await discardLemmas(1,'The Counterexample'); return; }
+  if(c.key==='prof'){
+    if(S.r.cheaters>0){
+      S.caught++; log(`Curse: The Professor caught you cheating (${S.caught} of 2).`,'bad');
+      if(S.caught>=2) return endGame(false,'You were caught cheating twice and expelled from Seidman University.');
+      await discardLemmas(2,'The Professor',true);
+    } else log('Curse: The Professor. Nobody cheated this round, so nothing happens.');
+  }
+}
+async function resolveRound(){
+  const r=S.r, sc=r.score; if(r.resolving||r.resolved) return;
+  r.resolving=true; render();
+  if(sc.pass){
+    const k=sc.need>0?Math.floor(sc.total/sc.need):Infinity;
+    let pend=r.lemmas.slice(), toProve=[];
+    if(pend.length<=k) toProve=pend;
+    else for(let i=0;i<k;i++){
+      const c=await choose(`Choose a lemma to prove (${i+1} of ${k})`,`You scored enough to prove ${k} of the ${r.lemmas.length} lemmas played.`,
+        pend.map(c=>({label:`${LEMMAS[c.key].name} lemma`,value:c})));
+      toProve.push(c); pend=pend.filter(x=>x!==c);
+    }
+    if(!r.lemmas.length) log('You passed, but no lemma was played this round.');
+    for(const c of toProve){ await proveLemma(c); if(S.phase==='over') return; }
+    for(const c of r.lemmas) if(!toProve.includes(c)){ S.discard.push(c); log(`The ${LEMMAS[c.key].name} lemma wasn’t proven and was discarded.`); }
+  } else {
+    for(const c of r.lemmas){ S.discard.push(c); log(`The ${LEMMAS[c.key].name} lemma wasn’t proven and was discarded.`); }
+  }
+  const curses=(sc.pass?0:1)+r.cheaters;
+  for(let i=0;i<curses;i++){ await drawCurse(); if(S.phase==='over') return; }
+  if(S.goalsOut) return endGame(false,'The goal cards ran out before you proved enough theorems.');
+  if(S.lastChanceRound!==null&&S.lastChanceRound<=S.round) return endGame(false,'The curse deck ran out and your last chance has passed.');
+  r.resolving=false; r.resolved=true; render();
+}
+function nextRound(){ S.hands.forEach(refill); S.round++; startRound(); }
+
+/* ================= modal helpers ================= */
+let modalRes=null, modalOpts=[], modalCancel=false, askValidate=null;
+function showModal(html,cancel){ const m=document.getElementById('modal'); m.innerHTML=html; m.hidden=false; modalCancel=cancel; const f=m.querySelector('input,button.opt,button.primary,button'); if(f) f.focus(); }
+function closeModal(v){ const m=document.getElementById('modal'); if(m.hidden) return; m.hidden=true; m.innerHTML=''; const r=modalRes; modalRes=null; if(r) r(v); }
+function choose(title,text,options,cancel=false){
+  return new Promise(res=>{
+    modalRes=res; modalOpts=options;
+    showModal(`<div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-t"><h3 id="dlg-t">${esc(title)}</h3>${text?`<p>${esc(text)}</p>`:''}
+      <div class="dlg-opts">${options.map((o,i)=>`<button class="opt" data-mact="pick" data-i="${i}"><span>${esc(o.label)}</span>${o.desc?`<small>${esc(o.desc)}</small>`:''}</button>`).join('')}</div>
+      ${cancel?'<div class="dlg-foot"><button class="btn ghost" data-mact="cancel">Cancel</button></div>':''}</div>`,cancel);
+  });
+}
+function askText(title,text,ph,validate){
+  return new Promise(res=>{
+    modalRes=res; askValidate=validate;
+    showModal(`<div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-t"><h3 id="dlg-t">${esc(title)}</h3><p>${esc(text)}</p>
+      <form id="ask" class="form" style="margin:0;gap:8px"><input type="text" id="ask-in" autocomplete="off" placeholder="${esc(ph)}"><p class="err" id="ask-err" role="alert"></p>
+      <div class="dlg-foot"><button type="button" class="btn ghost" data-mact="cancel">Cancel</button><button type="submit" class="btn primary">Use it</button></div></form></div>`,true);
+  });
+}
+function info(title,html){ return new Promise(res=>{ modalRes=res; showModal(`<div class="dlg wide" role="dialog" aria-modal="true" aria-labelledby="dlg-t"><h3 id="dlg-t">${esc(title)}</h3>${html}<div class="dlg-foot"><button class="btn primary" data-mact="cancel">Close</button></div></div>`,true); }); }
+function esc(s){ return String(s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
+
+const RULES_HTML=`<div class="rules">
+<h4>Goal</h4><ul><li>Prove <b>4 of the 5 theorems</b> (or all 5 for a challenge). Each theorem needs its <b>2 lemmas</b>, shown on the board.</li></ul>
+<h4>Each round</h4><ul>
+<li><b>Pre-puzzle phase.</b> Each player may play 1 lemma or bonus card. Lemmas are proven only if the team passes the puzzle.</li>
+<li><b>Discards (house rule).</b> In the pre-puzzle phase, each player may discard a set number of cards per round (chosen at setup) and draw a replacement for each. A lemma that no unproven theorem needs can always be discarded free.</li>
+<li><b>Goal card.</b> One goal card is drawn (more with A Second Option).</li>
+<li><b>Puzzle phase.</b> Each player combines their own number cards with + − × ÷ ^ to get as close to the goal as possible. Each number card can be used once. Assist cards transform numbers.</li>
+<li><b>Scoring.</b> Perfect 10 · Good 6 · OK 2 · Poor 0. The team needs 5 × players − 2 points. Every multiple of the pass mark proves one played lemma. Failing draws a curse.</li></ul>
+<h4>You lose if</h4><ul><li>You are caught cheating twice (The Cheater played, then The Professor drawn).</li>
+<li>The last curse card is drawn and you don’t win the round after.</li><li>The last goal card is drawn and you don’t win that round.</li></ul>
+<h4>Solving on screen</h4><ul>
+<li>Tap a number, tap an operation, then tap a second number, like a calculator. The result becomes a new number you can keep combining.</li>
+<li>Selecting two numbers first and then an operation also works. The first number you tap goes on the left.</li>
+<li>Keyboard: <b>+ − * / ^</b> to combine, <b>Enter</b> to submit, <b>Z</b> or <b>Backspace</b> to undo.</li>
+<li>If time runs out, your number closest to the goal is submitted.</li></ul>
+<h4>Differences from the tabletop game</h4><ul>
+<li>Players take their puzzle turns one after another on the same screen, each with a full timer.</li>
+<li>The Engineer and The Statistician are applied automatically in the way that scores the most points.</li>
+<li>Cards in your submitted answer are discarded. Number and assist cards you didn’t use in it go back to your hand.</li>
+<li>The Tutor is on the honor system: only the Tutor should help another player during their turn.</li></ul>
+<h4>Best answer and score</h4><ul>
+<li>When your puzzle turn starts, the game searches in the background for the best answer your hand allows, for up to 30 seconds. It tries the simplest answers first and stops as soon as it finds an exact one, which usually takes well under a second.</li>
+<li>Stage 1, for up to 10 seconds, tries every way to combine your number cards (any subset, any order, all five operations) along with your Square, Triangle, geometric series, Koch snowflake, Combinatorialist and Cryptographer. Seems to work is used only as the final step.</li>
+<li>Stage 2 runs only if stage 1 found no exact answer. It repeats the search on every hand your Quotient map and Topologist could make, and applies the Algebraist’s swap to each result. The Topologist and Algebraist count only if you played them that round.</li>
+<li>Each round you get a score of max(100 × (1 − |your answer − best| ÷ best), 0). 100 means you matched the best found, and being off by 100% or more scores 0. A missing answer scores 0.</li>
+<li>An answer as close to the goal as the best, but on the other side of it, also scores 100. If the best is exactly 0, the difference is divided by 1 instead.</li>
+<li>The Scorecard button shows every round so far, and the end of the game shows your average.</li></ul></div>`;
+
+/* ================= rendering ================= */
+const app=document.getElementById('app');
+function fracHTML(label){ const m=String(label).match(/^(\d+)\/(\d+)$/); return m?`<span class="fr"><span>${m[1]}</span><span>${m[2]}</span></span>`:esc(label); }
+/* card art lives in card-art/ next to this page */
+const ART='card-art/';
+const artSrc = name => `${ART}${name}.webp`;
+function artName(c){
+  if(c.kind==='number'){ const m=c.label.match(/^1\/(\d+)$/); return 'num-'+(m?'1-'+m[1]:c.label); }
+  return ({lemma:'lemma-',assist:'assist-',bonus:'bonus-'})[c.kind]+c.key;
+}
+function cardText(c){
+  if(c.kind==='number') return `Number card ${c.label}`;
+  if(c.kind==='lemma') return `${LEMMAS[c.key].name} lemma card`;
+  if(c.kind==='assist') return `Assist card: ${ASSIST[c.key].name}. ${ASSIST[c.key].text}`;
+  return `Bonus card: ${BONUS[c.key].name}. ${BONUS[c.key].text}`;
+}
+const imgHTML = (name,alt) => `<img class="art" src="${artSrc(name)}" alt="${esc(alt)}" decoding="async" draggable="false">`;
+// A card face with no buttons: art over the text fallback.
+function faceHTML(c){
+  let eye,body;
+  if(c.kind==='number'){ eye='Number'; body=`<div class="c-num">${fracHTML(c.label)}</div>`; }
+  else if(c.kind==='lemma'){ const L=LEMMAS[c.key]; eye='Lemma'; body=`<div class="c-glyph">${L.glyph}</div><div class="c-name">${L.name}</div>`; }
+  else if(c.kind==='assist'){ const A=ASSIST[c.key]; eye='Assist'; body=`<div class="c-name">${A.name}</div><div class="c-sym">${A.sym}</div><div class="c-text">${A.text}</div>`; }
+  else { const B=BONUS[c.key]; eye='Bonus'; body=`<div class="c-name">${B.name}</div><div class="c-text">${B.text}</div>`; }
+  return `<div class="card k-${c.kind}"><div class="c-in"><div class="c-eye">${eye}</div>${body}</div>${imgHTML(artName(c),cardText(c))}</div>`;
+}
+// A hand card: tap the art to see it full size; buttons sit underneath.
+function cardHTML(c,foot='',fresh=false){
+  return `<div class="cw${fresh?' fresh':''}"${fresh?' title="Just drawn"':''}><button class="zoom" data-act="zoom" data-art="${artName(c)}" data-name="${esc(cardName(c))}" aria-label="Enlarge ${esc(cardName(c))}">${faceHTML(c)}</button>${foot}</div>`;
+}
+const backHTML = (kind,cls='') => `<div class="card ${cls}"><div class="c-in"></div>${imgHTML('back-'+kind,'')}</div>`;
+function goalHTML(g,cls='',tag='div',attrs=''){
+  const alt=`Goal card ${g.label}${g.sub.startsWith('≈')?' '+g.sub:''}`;
+  return `<${tag} class="goal ${cls}" ${attrs}><span class="goal-in"><span class="g-eye">Goal</span><span class="g-val">${esc(g.label)}</span><span class="g-sub">${esc(g.sub)}</span></span>${imgHTML(g.art||'goal-'+g.label,alt)}</${tag}>`;
+}
+// Goal cards turn over from their back the first time they are shown.
+function flipHTML(inner,animate){ return `<div class="flip${animate?' go':''}"><div class="flip-in"><div class="face">${inner}</div><div class="face back"><div class="goal">${imgHTML('back-goal','')}</div></div></div></div>`; }
+const PHASE_LABEL={pre:'Pre-puzzle phase',goal:'Goal card',puzzle:'Puzzle phase',results:'Post-puzzle phase',over:'Game over'};
+
+function render(){
+  if(!S){ renderSetup(); return; }
+  const n=S.cfg.players.length;
+  const head=`<header class="bar"><div class="brand"><span class="mark">Five Theorems</span><span class="sub">Seidman University · Department of Mathematics</span></div>
+    <span class="phase-pill">Round ${S.round} · ${PHASE_LABEL[S.phase]}</span>
+    <div class="bar-actions"><button class="btn small" data-act="scorecard">Scorecard</button><button class="btn small" data-act="rules">Rules</button><button class="btn small ghost" data-act="quit">New game</button></div></header>`;
+  const board=`<section class="board-wrap" aria-label="Theorems"><div class="board-head"><span class="section-label">The five theorems</span><span class="chip brass"><b>${provenCount()}</b> of ${S.cfg.target} proven to graduate</span></div>
+    <div class="board">${S.theorems.map(t=>{
+      const status=t.slots.map(s=>`${LEMMAS[s.type].name} lemma ${s.card?'proven':'not proven'}`).join(', ');
+      return `<button class="thm${t.proven?' proven':''}" data-act="zoom" data-art="thm-${t.i}" data-name="${esc(t.name)}" aria-label="${esc(t.name)}: ${t.proven?'proven':status}. Enlarge card.">
+        <div class="thm-in"><div class="thm-name">${esc(t.name)}</div><div class="slots">${t.slots.map(s=>`<div class="slot${s.card?' filled':''}"><span class="gl">${LEMMAS[s.type].glyph}</span>${LEMMAS[s.type].name}</div>`).join('')}</div></div>
+        ${imgHTML('thm-'+t.i,'')}
+        ${t.slots.map((s,k)=>s.card?`<span class="slot-ov ${k?'r':'l'} filled"><span class="gl">${LEMMAS[s.type].glyph}</span><small>Proven</small></span>`:'').join('')}
+        ${t.proven?'<span class="qed">Q.E.D. ∎</span>':''}</button>`;
+    }).join('')}
+      <div class="decks" aria-label="Decks">${[['green','Green',S.green.length],['goal','Goals',S.goals.length],['curse','Curses',S.curses.length]].map(([k,l,c])=>
+        `<div class="pile">${backHTML(k,c?'':'empty')}<span>${l} <b>${c}</b></span></div>`).join('')}</div></div></section>`;
+  const base=5*n-2, parts=[`${base} base`];
+  if(S.r.office) parts.push(`−${S.r.office} Office Hours`);
+  if(S.mathHard.length) parts.push(`+${2*S.mathHard.length} Math is Hard`);
+  const chips=[`<span class="chip brass" title="${parts.join(', ')}">Pass mark <b>${required()}</b> pts${parts.length>1?` <span class="muted">(${parts.join(', ')})</span>`:''}</span>`];
+  if(S.mathHard.length) chips.push(`<span class="chip bad">Math is Hard ×${S.mathHard.length}</span>`);
+  if(S.cheaterPending) chips.push(`<span class="chip warn">The Cheater: next lemma is free</span>`);
+  if(S.caught) chips.push(`<span class="chip bad">Caught cheating <b>${S.caught}</b>/2</span>`);
+  if(S.lastChanceRound===S.round) chips.push(`<span class="chip bad">Final chance: no curses left</span>`);
+  if(S.goalsOut) chips.push(`<span class="chip bad">Last goal card</span>`);
+  chips.push(`<span class="chip">Discard pile <b>${S.discard.length}</b></span>`,`<span class="chip">${DIFF[S.cfg.diff].label}${S.cfg.timer?'':' · untimed'}</span>`);
+  const status=`<section class="status" aria-label="Status">${chips.join('')}</section>`;
+  let main='';
+  if(S.phase==='pre') main=renderPre();
+  else if(S.phase==='goal') main=renderGoal();
+  else if(S.phase==='puzzle') main=W?renderWS():renderHandoff();
+  else if(S.phase==='results') main=renderResults();
+  else if(S.phase==='over') main=renderOver();
+  const logHTML=`<aside class="log" aria-label="Proof log"><h3>Proof log</h3><ol>${S.log.slice(0,120).map(e=>`<li class="${e.tone}"><span class="lg-r">R${e.round}</span><span>${esc(e.text)}</span></li>`).join('')}</ol></aside>`;
+  app.innerHTML=head+board+status+`<div class="layout"><section class="panel">${main}</section>${logHTML}</div>`;
+  if(W) tick();
+}
+
+function renderPre(){
+  const r=S.r, n=S.cfg.players.length, p=S.tab, lim=1+r.extra;
+  const tabs=n>1?`<div class="tabs" role="tablist">${S.cfg.players.map((nm,i)=>`<button role="tab" aria-selected="${i===p}" data-act="tab" data-i="${i}">${esc(nm)}<span class="tab-count">${r.plays[i]}/${lim}</span></button>`).join('')}</div>`:'';
+  const cards=S.hands[p].map(c=>{
+    const btns=[];
+    if(c.kind==='lemma'||c.kind==='bonus'){ const why=cantPlay(p,c); btns.push(`<button class="c-play" data-act="play" data-id="${c.id}" ${why?'disabled':''}>${why||'Play'}</button>`); }
+    const t=tossInfo(p,c);
+    if(t) btns.push(`<button class="c-toss" data-act="toss" data-id="${c.id}" aria-label="Discard ${esc(cardName(c))} and draw a replacement">${t.free?'Discard · free':'Discard'}</button>`);
+    return cardHTML(c,btns.length?`<div class="c-foot">${btns.join('')}</div>`:'',r.fresh.includes(c.id));
+  }).join('')||'<p class="muted">No cards in hand.</p>';
+  const left=S.cfg.discards-r.tosses[p];
+  const played=r.played.length?`<div class="minis">${r.played.map(({p,c})=>`<figure class="mini"><button class="zoom" data-act="zoom" data-art="${artName(c)}" data-name="${esc(cardName(c))}" aria-label="Enlarge ${esc(cardName(c))}">${faceHTML(c)}</button><figcaption>${n>1?esc(S.cfg.players[p]):esc(cardName(c))}</figcaption></figure>`).join('')}</div>`:'<p class="muted">Nothing played yet this round.</p>';
+  return `<div class="spread"><div><p class="eyebrow">Step 1 of 3</p><h2>Pre-puzzle phase</h2></div><button class="btn primary" data-act="goal">Draw the goal card</button></div>
+    <p class="lede">Each player may play ${lim===1?'1 lemma or bonus card':`up to ${lim} lemma or bonus cards`}. A played lemma is proven only if the team passes the puzzle. Number and assist cards are used in the puzzle.</p>
+    ${tabs}<div class="row"><span class="chip${left>0?'':' warn'}">Discards left <b>${left}</b> of ${S.cfg.discards}</span><span class="muted" style="font-size:13px">Each discard draws a replacement. Lemmas no theorem needs are always free to discard.</span></div>
+    <div class="hand">${cards}</div>
+    <div class="section-label">Played this round</div>${played}`;
+}
+function renderGoal(){
+  const r=S.r, animate=!r.flipped; r.flipped=true;
+  if(!r.goal) return `<div><p class="eyebrow">Step 2 of 3</p><h2>Choose the goal</h2></div><p class="lede">A Second Option lets the team pick. Discuss, then tap the goal you want.</p>
+    <div class="row">${r.goals.map((g,i)=>flipHTML(goalHTML(g,'','button',`data-act="pick-goal" data-i="${i}" aria-label="Choose goal ${esc(g.label)}"`),animate)).join('')}</div>`;
+  return `<div><p class="eyebrow">Step 2 of 3</p><h2>The goal for this round</h2></div>
+    <div class="row" style="gap:24px">${flipHTML(goalHTML(r.goal),animate)}<div class="center"><p class="lede">Each player will try to reach <b>${esc(r.goal.label)}</b>${r.goal.sub.startsWith('≈')?` (${esc(r.goal.sub)})`:''}.
+    ${S.cfg.timer?`You get ${timeFor()} seconds each.`:'There is no time limit.'} Good is within ${DIFF[S.cfg.diff].gl}, OK is within ${DIFF[S.cfg.diff].ol}.</p>
+    <button class="btn primary" data-act="begin-puzzle">Start the puzzle phase</button></div></div>`;
+}
+function effectsFor(p){
+  const e=S.r.eff[p], h=S.hands[p], out=[];
+  if(e.fact) out.push('The Combinatorialist: take one factorial');
+  if(e.deform) out.push('The Topologist: deform one number card');
+  if(e.crypto) out.push('The Cryptographer: primes can be used 3 times');
+  if(e.mods.length) out.push(`The Algebraist: numbers can be swapped within ℤ/${fmt(e.mods[0])}ℤ`);
+  if(S.r.engineer) out.push('The Engineer: answers are rounded to an integer if it helps');
+  if(S.r.stat) out.push('The Statistician: one answer may be replaced by an average');
+  const as=h.filter(c=>c.kind==='assist'); if(as.length) out.push('Assist cards: '+as.map(c=>ASSIST[c.key].name).join(', '));
+  return out;
+}
+function renderHandoff(){
+  const p=S.r.turn, n=S.cfg.players.length, nm=S.cfg.players[p], eff=effectsFor(p);
+  const tutors=S.r.tutors.filter(t=>t!==p).map(t=>S.cfg.players[t]);
+  const nums=S.hands[p].filter(c=>c.kind==='number').length;
+  return `<div class="center">${n>1?`<p class="eyebrow">Player ${p+1} of ${n}</p>`:'<p class="eyebrow">Step 3 of 3</p>'}
+    <h2>${esc(nm)}, your turn to solve</h2>
+    <div class="row">${goalHTML(S.r.goal)}<p class="lede">You have ${nums} number card${nums===1?'':'s'}. ${S.cfg.timer?`The clock gives you ${timeFor()} seconds.`:'There is no time limit.'} Get as close to the goal as you can. You don’t have to use every card.</p></div>
+    ${eff.length?`<div class="section-label">Available to you</div><ul class="effects">${eff.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
+    ${tutors.length?`<p class="chip good">${esc(tutors.join(' and '))} played The Tutor and may help you.</p>`:''}
+    <button class="btn primary" data-act="start-turn">${S.cfg.timer?'Start the clock':'Start solving'}</button></div>`;
+}
+function renderWS(){
+  const p=W.p, h=S.hands[p], pg=personalGoal();
+  const tiles=W.tiles.map(t=>{
+    const pos=W.sel.map((x,i)=>x===t.tid?i+1:0).filter(Boolean);
+    const sub=t.orig?(t.note||'card'):(t.note||stripOuter(t.expr));
+    const art=t.orig&&!t.note; // an untouched number card shows its card art
+    return `<button class="tile${art?' art-tile':''}${t.orig?'':' derived'}${pos.length?' sel':''}" data-act="tile" data-t="${t.tid}" aria-pressed="${pos.length>0}" aria-label="${esc(fmt(t.v))}${t.orig?'':', '+esc(sub)}">
+      ${pos.length?`<span class="ord">${pos.join('·')}</span>`:''}${t.uses>1?`<span class="uses">×${t.uses}</span>`:''}
+      <span class="t-val">${esc(fmt(t.v))}</span><span class="t-exp">${esc(sub)}</span>${art?imgHTML(artName({kind:'number',label:t.label}),''):''}</button>`;
+  }).join('')||'<p class="muted">No numbers left. Undo, or use a wild card.</p>';
+  let pv='<span class="muted">Tap a number, then an operation, then a second number.</span>';
+  if(W.sel.length===1&&W.pendingOp){ const t=tileById(W.sel[0]); pv=`<span class="pv-val">${esc(fmt(t.v))} ${OPS[W.pendingOp].s} ?</span><span class="muted">Now tap the second number.</span>`; }
+  else if(W.sel.length===1){ const t=tileById(W.sel[0]), r=rate(t.v,pg); pv=`<span class="pv-val">${esc(fmt(t.v))}</span><span class="tier t-${r.k}">${r.tier} · ${r.pts} pts</span><span class="muted">off by ${esc(fmt(r.d))}. Tap an operation to keep going, or submit it.</span>`; }
+  else if(W.sel.length===2){ const [a,b]=W.sel.map(tileById); pv=`<span class="pv-val">${esc(fmt(a.v))} ○ ${esc(fmt(b.v))}</span><span class="muted">Choose an operation.</span>`; }
+  const any=W.sel.length>0;
+  const ops=[['+','+','add'],['-','−','subtract'],['*','×','multiply'],['/','÷','divide'],['^','xʸ','power']].map(([k,s,l])=>`<button class="op${W.pendingOp===k?' on':''}" data-act="op" data-op="${k}" ${any?'':'disabled'} aria-pressed="${W.pendingOp===k}" aria-label="${l}">${s}</button>`).join('');
+  const assists=h.filter(c=>c.kind==='assist'&&!W.used.includes(c.id)&&!(c.key==='koch'&&W.koch));
+  const tool=(act,extra,c,label)=>`<button class="tool" data-act="${act}" ${extra}>${faceHTML(c)}<span>${label}</span></button>`;
+  const tools=assists.map(c=>tool('assist',`data-id="${c.id}"`,c,`${esc(ASSIST[c.key].name)} <i>${ASSIST[c.key].sym}</i>`));
+  if(W.fact>0) tools.push(tool('fact','',{kind:'bonus',key:'combin'},'Factorial <i>x!</i>'));
+  if(W.deform>0) tools.push(tool('deform','',{kind:'bonus',key:'topo'},'Deform a card <i>≃</i>'));
+  if(W.mods.length) tools.push(tool('shift','',{kind:'bonus',key:'algebra'},`Swap in ℤ/${esc(fmt(W.mods[0]))}ℤ <i>≡</i>`));
+  const tutors=S.r.tutors.filter(t=>t!==p).map(t=>S.cfg.players[t]);
+  const subLabel=W.sel.length===1?'Submit this answer':W.tiles.length?'Submit my closest number':'Submit with no answer';
+  return `<div class="ws-head"><div class="ws-goals">${goalHTML(S.r.goal,'small')}${W.koch?goalHTML({label:'4/3',sub:'Koch snowflake',art:'assist-koch'},'small personal'):''}
+      <div><p class="eyebrow">${esc(S.cfg.players[p])}</p><p class="muted">Aim for ${esc(W.koch?'4/3':S.r.goal.label)}</p></div></div>
+      ${W.end?`<div class="timer" id="timer" role="timer" aria-live="off">${mmss(timeFor())}</div>`:'<div class="muted" style="align-self:center">Untimed</div>'}</div>
+    ${tutors.length?`<p class="chip good" style="justify-self:start">Tutor: ${esc(tutors.join(' and '))} may help.</p>`:''}
+    <div class="tiles">${tiles}</div>
+    <div class="preview" aria-live="polite">${pv}</div>
+    <div class="ops">${ops}</div>
+    ${tools.length?`<div class="section-label">Cards and powers</div><div class="tools">${tools.join('')}</div>`:''}
+    <div class="msg" role="status">${esc(W.msg)}</div>
+    <div class="spread"><div class="row"><button class="btn" data-act="undo" ${W.hist.length?'':'disabled'}>Undo</button><button class="btn ghost" data-act="reset" ${W.hist.length?'':'disabled'}>Start over</button></div>
+      <button class="btn primary" data-act="submit">${subLabel}</button></div>`;
+}
+function renderResults(){
+  const r=S.r, sc=r.score, n=S.cfg.players.length, st=sc.plan.stat;
+  const rows=r.results.map((res,i)=>{
+    const f=sc.plan.final[i], notes=[];
+    if(st&&st.t===i) notes.push(`replaced by the average of ${esc(S.cfg.players[st.a])} and ${esc(S.cfg.players[st.b])} (${esc(fmt(st.avg))})`);
+    if(f.how) notes.push(`${f.how} by The Engineer`);
+    const sol=r.solve[i], acc=r.acc[i];
+    let bestCell='<span class="muted">Searching… (up to 30 s)</span>';
+    if(sol&&sol.status==='running'&&sol.progress&&sol.progress.v!=null){
+      const pr=sol.progress;
+      bestCell=`<span class="muted">Searching${pr.phase===2?' with special cards':''}… ${Math.round(pr.elapsed/1000)} s</span><div class="expr">best so far ${esc(fmtF(pr.v))}, off by ${esc(dec(pr.d))}</div>`;
+    }
+    if(sol&&sol.status==='done'){
+      const exact=sol.d<1e-9, koch=Math.abs(sol.t-4/3)<1e-12&&Math.abs(num(r.goal.v)-4/3)>1e-12;
+      bestCell=sol.v==null?'<span class="muted">No numbers to work with</span>'
+        :`<span class="mono">${esc(fmtF(sol.v))}</span><div class="expr">${esc(stripOuter(sol.e))}</div><div class="expr">${exact?'exact':'off by '+esc(dec(sol.d))}${koch?' from 4/3 (Koch snowflake)':''}${sol.ph===2?' · needed a special card':''}${!exact&&!sol.complete?' · best found in 30 s':''}${!exact&&sol.complete?' · every combination checked':''}</div>`;
+    }
+    const scoreCell=acc?`<span class="score ${band(acc.score)}">${s1(acc.score)}</span><div class="minibar ${band(acc.score)}"><span style="width:${acc.score}%"></span></div>${acc.beat?'<div class="expr">beat the search</div>':''}`:'<span class="muted">…</span>';
+    return `<tr><td>${esc(S.cfg.players[i])}</td><td><span class="mono">${esc(fmt(f.v))}</span>${res.v?`<div class="expr">${esc(res.expr)}</div><div class="expr">off by ${esc(fmt(f.r.d))}${res.koch?' from 4/3':''}</div>`:''}${notes.length?`<div class="expr" style="color:var(--brass)">${notes.join('; ')}</div>`:''}</td>
+      <td><span class="tier t-${f.r.k}">${f.r.tier}</span></td><td class="num">${f.r.pts}</td><td>${bestCell}</td><td>${scoreCell}</td></tr>`;
+  }).join('');
+  const pct=sc.need>0?Math.min(100,sc.total/sc.need*100):100;
+  const k=sc.need>0?Math.floor(sc.total/sc.need):r.lemmas.length;
+  let outcome;
+  if(sc.pass) outcome=r.lemmas.length?`Enough to prove ${Math.min(k,r.lemmas.length)} of the ${r.lemmas.length} lemma${r.lemmas.length===1?'':'s'} played.`:'No lemma was played, so nothing new is proven.';
+  else outcome=`You draw a curse card${r.lemmas.length?', and the lemmas played are discarded':''}.`;
+  if(r.cheaters) outcome+=` The Cheater adds ${r.cheaters} more curse${r.cheaters>1?'s':''}.`;
+  const curseMinis=r.cursesDrawn.length?`<div class="minis">${r.cursesDrawn.map(k=>`<figure class="mini"><button class="zoom" data-act="zoom" data-art="curse-${k}" data-name="${esc(CURSE[k].name)}" aria-label="Enlarge ${esc(CURSE[k].name)}"><div class="card">${imgHTML('curse-'+k,CURSE[k].name)}</div></button><figcaption>${esc(CURSE[k].name)}</figcaption></figure>`).join('')}</div>`:'';
+  const act=r.resolved?`<div class="section-label">What happened</div>${curseMinis}<ul class="recap">${r.post.map(e=>`<li class="${e.tone==='bad'?'t-poor':e.tone==='good'?'t-perfect':''}">${esc(e.text)}</li>`).join('')||'<li>Nothing else happened.</li>'}</ul>
+      <div class="row"><button class="btn primary" data-act="next">Start round ${S.round+1}</button><span class="muted">Everyone draws back up to 10 cards.</span></div>`
+    :`<div class="row"><button class="btn primary" data-act="resolve" ${r.resolving?'disabled':''}>${sc.pass?'Prove lemmas':'Draw the curse'}${r.cheaters&&sc.pass?' and curses':''}</button></div>`;
+  return `<div><p class="eyebrow">Post-puzzle phase</p><h2>Round ${S.round} results</h2></div>
+    <div class="table-wrap"><table><thead><tr><th>Player</th><th>Answer (goal ${esc(r.goal.label)})</th><th>Rating</th><th>Pts</th><th>Best found</th><th>Score</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="muted" style="font-size:13px">${SCORE_NOTE()} Your score uses your own answer, before any Engineer or Statistician adjustment.</p>
+    <div class="spread"><p class="verdict ${sc.pass?'pass':'fail'}">${sc.pass?'Passed':'Not passed'}</p><p class="mono">${sc.total} / ${sc.need} points</p></div>
+    <div class="meter${sc.pass?' pass':''}" role="img" aria-label="${sc.total} of ${sc.need} points"><span style="width:${pct}%"></span></div>
+    <p class="lede">${esc(outcome)}</p>${act}`;
+}
+function renderOver(){
+  const o=S.outcome;
+  return `<div class="center"><p class="eyebrow">${o.win?'Dissertation accepted':'Game over'}</p>
+    <div class="over-title ${o.win?'win':'lose'}">${o.win?'Q.E.D.':'Not proven'}</div>
+    <p class="lede">${esc(o.reason)} ${o.win?`It took ${S.round} round${S.round===1?'':'s'}.`:`You proved ${provenCount()} theorem${provenCount()===1?'':'s'} in ${S.round} round${S.round===1?'':'s'}.`}</p>
+    <div class="row"><button class="btn primary" data-act="again">Play again</button><button class="btn" data-act="settings">Change settings</button></div>
+    <h3 style="margin-top:10px">Scorecard</h3>${scorecardHTML()}</div>`;
+}
+function renderSetup(){
+  const d=setup;
+  app.innerHTML=`<section class="setup">
+    <div><p class="eyebrow">A Josh Seidman Productions game</p><h1>Five Theorems</h1>
+      <p class="lede">Welcome to Seidman University. You are one challenge away from your mathematics PhD: prove the five open theorems before time runs out.</p>
+      <form class="form" id="setup-form">
+        <div class="field"><span class="lbl">Players</span><div class="seg">${[1,2,3,4,5,6].map(i=>`<button type="button" data-act="set-n" data-i="${i}" aria-pressed="${d.n===i}">${i}</button>`).join('')}</div></div>
+        <div class="field"><span class="lbl">Names</span><div class="names">${Array.from({length:d.n},(_,i)=>`<input type="text" id="name-${i}" data-name="${i}" value="${esc(d.names[i])}" aria-label="Player ${i+1} name" maxlength="20">`).join('')}</div></div>
+        <div class="field"><span class="lbl">Difficulty</span><div class="diffs">${Object.entries(DIFF).map(([k,v])=>`<button type="button" class="diff" data-act="set-diff" data-k="${k}" aria-pressed="${d.diff===k}"><b>${v.label}</b><span>${v.t} s · good ≤ ${v.gl} · ok ≤ ${v.ol}</span></button>`).join('')}</div></div>
+        <div class="field"><span class="lbl">To graduate</span><div class="seg"><button type="button" data-act="set-target" data-i="4" aria-pressed="${d.target===4}">4 of 5 theorems</button><button type="button" data-act="set-target" data-i="5" aria-pressed="${d.target===5}">All 5</button></div></div>
+        <div class="field"><span class="lbl">Discards per player per round</span><div class="seg">${[0,1,2,3].map(i=>`<button type="button" data-act="set-disc" data-i="${i}" aria-pressed="${d.discards===i}">${i}</button>`).join('')}</div></div>
+        <label class="check" for="use-timer"><input type="checkbox" id="use-timer" ${d.timer?'checked':''}> Use the puzzle timer</label>
+        <div class="row"><button type="submit" class="btn primary">Enroll ${d.n===1?'':'the cohort '}and begin</button><button type="button" class="btn ghost" data-act="rules">Read the rules</button></div>
+      </form></div>
+    <div class="side"><div class="fan${fanDealt?' still':''}" aria-hidden="true">${[0,1,2,3,4].map(i=>`<div class="card" style="--r:${(i-2)*13}deg;--i:${i}">${imgHTML('thm-'+i,'')}</div>`).join('')}</div>
+    <aside class="how"><h2>How a round plays</h2><ol>
+      <li><b>Pre-puzzle.</b> Each player may play one lemma or bonus card from their hand of 10, and discard a few cards to draw new ones.</li>
+      <li><b>Goal card.</b> A goal is drawn: a prime, a factorial, π, e, φ and more.</li>
+      <li><b>Puzzle.</b> Each player takes a turn combining their number cards with + − × ÷ ^ to get close to the goal.</li>
+      <li><b>Post-puzzle.</b> Score 5 × players − 2 points to prove the lemmas you played. Fall short and you draw a curse. You also see the best answer your hand allowed, and a 0–100 score.</li></ol>
+      <p class="muted">Pass the device between players for the puzzle turns. Prove ${d.target===5?'all five':'four of the five'} theorems to graduate.</p></aside></div>
+  </section>`;
+  fanDealt=true;
+}
+let fanDealt=false;
+
+/* ================= events ================= */
+document.addEventListener('click',async e=>{
+  const mb=e.target.closest('[data-mact]');
+  if(mb){ if(mb.dataset.mact==='pick') closeModal(modalOpts[+mb.dataset.i].value); else closeModal(null); return; }
+  const b=e.target.closest('[data-act]'); if(!b||b.disabled) return;
+  const a=b.dataset.act;
+  switch(a){
+    case 'set-n': setup.n=+b.dataset.i; return render();
+    case 'set-diff': setup.diff=b.dataset.k; return render();
+    case 'set-target': setup.target=+b.dataset.i; return render();
+    case 'set-disc': setup.discards=+b.dataset.i; return render();
+    case 'rules': return info('How to play Five Theorems',RULES_HTML);
+    case 'scorecard': return info('Scorecard',scorecardHTML());
+    case 'zoom': return info(b.dataset.name,`<div class="zoomed"><img src="${artSrc(b.dataset.art)}" alt="${esc(b.dataset.name)}"></div>`);
+    case 'quit': { const ok=await choose('Start a new game?','This round and all progress will be lost.',[{label:'Yes, start over',value:true},{label:'Keep playing',value:false}]); if(ok){ clearInterval(timerId); stopWorkers(); W=null; S=null; render(); } return; }
+    case 'tab': S.tab=+b.dataset.i; return render();
+    case 'play': return playCard(S.tab,+b.dataset.id);
+    case 'toss': return tossCard(S.tab,+b.dataset.id);
+    case 'goal': return toGoal();
+    case 'pick-goal': return pickGoal(+b.dataset.i);
+    case 'begin-puzzle': S.phase='puzzle'; S.r.turn=0; W=null; return render();
+    case 'start-turn': return startTurn();
+    case 'tile': return clickTile(+b.dataset.t);
+    case 'op': return binop(b.dataset.op);
+    case 'assist': return useAssist(+b.dataset.id);
+    case 'fact': return useFactorial();
+    case 'deform': return useDeform();
+    case 'shift': return useShift();
+    case 'undo': return undo();
+    case 'reset': return resetWS();
+    case 'submit': return submit();
+    case 'resolve': return resolveRound();
+    case 'next': return nextRound();
+    case 'again': return newGame(S.cfg);
+    case 'settings': stopWorkers(); S=null; return render();
+  }
+});
+// If a card image can't load, drop it so the text version of the card shows instead.
+document.addEventListener('error',e=>{
+  const t=e.target;
+  if(t&&t.tagName==='IMG'&&t.classList.contains('art')){ const p=t.parentElement; t.remove(); if(p) p.classList.add('noart'); }
+},true);
+let artPreloaded=false;
+function preloadArt(){
+  if(artPreloaded) return; artPreloaded=true;
+  const names=[];
+  for(let i=0;i<=50;i++) names.push('num-'+i);
+  for(let n=2;n<=10;n++) names.push('num-1-'+n);
+  for(const k in LEMMAS) names.push('lemma-'+k);
+  for(const k in ASSIST) names.push('assist-'+k);
+  for(const k in BONUS) names.push('bonus-'+k);
+  for(const k in CURSE) names.push('curse-'+k);
+  buildGoals().forEach(g=>names.push(g.art));
+  let i=0;
+  const step=()=>{ for(let k=0;k<6&&i<names.length;k++,i++){ const im=new Image(); im.src=artSrc(names[i]); } if(i<names.length) setTimeout(step,200); };
+  setTimeout(step,800);
+}
+document.addEventListener('input',e=>{ const i=e.target.dataset&&e.target.dataset.name; if(i!==undefined) setup.names[+i]=e.target.value; });
+document.addEventListener('change',e=>{ if(e.target.id==='use-timer') setup.timer=e.target.checked; });
+document.addEventListener('submit',e=>{
+  e.preventDefault();
+  if(e.target.id==='ask'){
+    const inp=document.getElementById('ask-in'), r=askValidate(inp.value);
+    if(r.err){ document.getElementById('ask-err').textContent=r.err; inp.focus(); } else closeModal(r.value);
+    return;
+  }
+  if(e.target.id==='setup-form'){
+    const players=setup.names.slice(0,setup.n).map((s,i)=>s.trim()||`Player ${i+1}`);
+    try{ localStorage.setItem('ft-setup',JSON.stringify(setup)); }catch(err){}
+    newGame({players,diff:setup.diff,timer:setup.timer,target:setup.target});
+  }
+});
+document.addEventListener('keydown',e=>{
+  const m=document.getElementById('modal');
+  if(!m.hidden){ if(e.key==='Escape'&&modalCancel) closeModal(null); return; }
+  if(!W||e.metaKey||e.ctrlKey||e.altKey) return;
+  if(e.target.matches('input,textarea')) return;
+  const map={'+':'+','-':'-','*':'*','x':'*','/':'/','^':'^'};
+  if(map[e.key]){ e.preventDefault(); binop(map[e.key]); }
+  else if(e.key==='Enter'){ e.preventDefault(); submit(); }
+  else if(e.key==='z'||e.key==='Backspace'){ e.preventDefault(); undo(); }
+});
+
+/* ================= Koch snowflake backdrop ================= */
+function drawBackdrop(){
+  const cv=document.getElementById('bg'), dpr=window.devicePixelRatio||1, w=innerWidth, h=innerHeight;
+  cv.width=w*dpr; cv.height=h*dpr; const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,w,h);
+  const side=(a,b,d,out)=>{ if(d===0){ out.push(a); return; } const dx=(b[0]-a[0])/3, dy=(b[1]-a[1])/3, p1=[a[0]+dx,a[1]+dy], p3=[a[0]+2*dx,a[1]+2*dy], c=Math.cos(-Math.PI/3), s=Math.sin(-Math.PI/3), p2=[p1[0]+dx*c-dy*s,p1[1]+dx*s+dy*c]; side(a,p1,d-1,out); side(p1,p2,d-1,out); side(p2,p3,d-1,out); side(p3,b,d-1,out); };
+  const flake=(cx,cy,R,rot,depth)=>{ const v=[0,1,2].map(i=>{ const t=rot-Math.PI/2+i*2*Math.PI/3; return [cx+R*Math.cos(t),cy+R*Math.sin(t)]; }); const pts=[]; for(let i=0;i<3;i++) side(v[i],v[(i+1)%3],depth,pts); ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.closePath(); };
+  const cx=w*0.82, cy=h*0.18, R0=Math.max(w,h)*0.42;
+  for(let k=0;k<5;k++){
+    const R=R0/Math.pow(Math.sqrt(3),k), rot=k*Math.PI/6;
+    flake(cx,cy,R,rot,Math.max(2,4-k));
+    ctx.fillStyle=k%2?'rgba(125,82,255,0.035)':'rgba(230,184,92,0.025)'; ctx.fill();
+    ctx.strokeStyle=k%2?'rgba(125,82,255,0.16)':'rgba(230,184,92,0.13)'; ctx.lineWidth=1; ctx.stroke();
+  }
+}
+addEventListener('resize',()=>{ clearTimeout(drawBackdrop.t); drawBackdrop.t=setTimeout(drawBackdrop,120); });
+drawBackdrop();
+render();
+</script>
