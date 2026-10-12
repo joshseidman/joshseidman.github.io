@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- PDF.js: renders the DEoM solution PDFs directly on the page -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   :root {
     --navy: #0B2A55;      /* Marquette blue */
@@ -28,7 +30,7 @@
     line-height: 1.6;
   }
   a { color: var(--navy); }
-  a:focus-visible, button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  a:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 
   /* ---------- Top navigation ---------- */
   header {
@@ -68,30 +70,28 @@
   section[data-page] { display: none; }
   section[data-page].shown { display: block; }
 
-  /* ---------- Home: three columns ---------- */
+  /* ---------- Home: two columns ---------- */
   .profile {
     display: grid;
-    grid-template-columns: 300px 1fr 1.5fr;
-    gap: 48px;
+    grid-template-columns: 300px 1fr;
+    gap: 56px;
     align-items: start;
   }
   .photo {
-    width: 200px;
-    height: 200px;
+    width: 300px;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
     border-radius: 50%;
     object-fit: cover;
     object-position: center 25%; /* keeps the face in frame on tall photos; adjust if needed */
-    border: 4px solid #fff;
-    box-shadow: 0 0 0 2px var(--navy);
     display: block;
   }
   .photo-fallback {
-    width: 200px; height: 200px; border-radius: 50%;
+    width: 300px; max-width: 100%; aspect-ratio: 1 / 1; border-radius: 50%;
     background: var(--navy); color: var(--gold);
     display: none; align-items: center; justify-content: center;
-    font-family: var(--serif); font-size: 4rem;
-    box-shadow: 0 0 0 2px var(--navy);
-    border: 4px solid #fff;
+    font-family: var(--serif); font-size: 6rem;
   }
   .name {
     font-family: var(--serif);
@@ -103,14 +103,14 @@
   }
   .position { color: var(--muted); margin: 0; font-size: 1.05rem; }
 
-  .contact { padding-top: 12px; }
+  .contact { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
   .contact address { font-style: normal; line-height: 1.7; }
   .contact .dept { font-weight: 600; }
-  .contact .email { margin-top: 18px; }
+  .contact .email { margin: 14px 0 0; }
 
   .research {
     border-left: 3px solid var(--gold);
-    padding-left: 28px;
+    padding-left: 32px;
   }
   h2 {
     font-family: var(--serif);
@@ -119,7 +119,7 @@
     color: var(--navy);
     margin: 0 0 12px;
   }
-  .research p { margin: 0 0 14px; max-width: 60ch; }
+  .research p { margin: 0 0 14px; }
   .interests { padding-left: 1.1em; margin: 0 0 24px; }
   .interests li { margin-bottom: 4px; }
   .cv-button {
@@ -133,21 +133,111 @@
   }
   .cv-button:hover { background: #163B72; }
 
+  /* Outside of math */
+  .hobbies { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--line); }
+  .hobbies dl {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 8px 20px;
+    margin: 0;
+  }
+  .hobbies dt { font-weight: 600; color: var(--navy); }
+  .hobbies dd { margin: 0; }
+
+  /* ---------- Miscellaneous section (below the profile) ---------- */
+  .misc { margin-top: 64px; padding-top: 36px; border-top: 3px solid var(--navy); }
+  .misc-title { font-size: 1.9rem; margin-bottom: 28px; }
+  .feature {
+    display: grid;
+    grid-template-columns: minmax(240px, 420px) 1fr;
+    gap: 40px;
+    align-items: start;
+    margin-bottom: 40px;
+  }
+  .feature img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: #fff;
+  }
+  .feature-placeholder {
+    display: none;
+    aspect-ratio: 4 / 3;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #B9C2D2;
+    border-radius: 4px;
+    color: var(--muted);
+    background: #fff;
+    text-align: center;
+    padding: 16px;
+  }
+  /* Alternate sides: image on the right */
+  .feature.reverse { grid-template-columns: 1fr minmax(240px, 420px); }
+  .feature.reverse > :first-child { order: 2; }
+  .feature h3 { margin-top: 0; }
+  .feature p { margin: 8px 0 16px; }
+
   /* ---------- Inner pages ---------- */
-  .page-title { font-size: 2rem; margin-bottom: 28px; }
+  /* One centered column, so content sits under the centered page title */
+  section[data-page]:not([data-page="home"]) { max-width: 760px; margin: 0 auto; }
+  section[data-page="deom"] { max-width: 900px; }
+  .page-title { font-size: 2.6rem; text-align: center; margin: 0 0 32px; }
   .entry { padding: 18px 0; border-bottom: 1px solid var(--line); max-width: 760px; }
   .entry:last-child { border-bottom: 0; }
   .entry-title { font-family: var(--serif); font-size: 1.2rem; font-weight: 600; margin: 0; }
   .entry-meta { color: var(--muted); margin: 2px 0 0; }
   .entry-links a { margin-right: 14px; font-size: 0.95rem; }
   h3 { font-family: var(--serif); font-size: 1.25rem; color: var(--navy); margin: 32px 0 4px; }
+  /* Subsection headings on inner pages (e.g. Journal articles, Marquette University, Research) */
+  section[data-page] > h3 { font-size: 1.8rem; margin: 44px 0 6px; }
+
+  /* ---------- DEoM solutions viewer ---------- */
+  .deom-intro { margin: -16px 0 24px; max-width: 75ch; }
+  .deom-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px 20px;
+    margin-bottom: 24px;
+  }
+  .deom-controls label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 0.9rem; color: var(--navy); }
+  .deom-controls select {
+    font: inherit;
+    font-weight: 400;
+    color: var(--ink);
+    padding: 8px 36px 8px 12px;
+    border: 1px solid #B9C2D2;
+    border-radius: 4px;
+    background: #fff;
+    min-width: 160px;
+  }
+  .deom-controls .side-link { padding-bottom: 9px; font-size: 0.95rem; }
+  .deom-status { color: var(--muted); margin: 0 0 16px; min-height: 1.6em; }
+  .deom-viewer { max-width: 900px; }
+  .deom-viewer canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #fff;
+    border: 1px solid var(--line);
+    box-shadow: 0 2px 10px rgba(11, 42, 85, 0.08);
+    margin-bottom: 20px;
+  }
 
   footer { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 24px; border-top: 1px solid var(--line); }
 
   /* ---------- Mobile ---------- */
   @media (max-width: 860px) {
+    main { max-width: 100%; }
     .profile { grid-template-columns: 1fr; gap: 32px; }
     .research { border-left: 0; border-top: 3px solid var(--gold); padding: 24px 0 0; }
+    .hobbies dl { grid-template-columns: 1fr; gap: 2px; }
+    .hobbies dd { margin-bottom: 10px; }
+    .feature, .feature.reverse { grid-template-columns: 1fr; gap: 20px; }
+    .feature.reverse > :first-child { order: 0; }
   }
 </style>
 </head>
@@ -160,7 +250,9 @@
       <a href="#publications">Publications</a>
       <a href="#teaching">Teaching</a>
       <a href="#talks">Talks</a>
-      <a href="#code">Code</a>
+      <a href="#projects">Projects</a>
+      <a href="Five%20Theorems%20Game/">Five Theorems Game</a>
+      <a href="#deom">DEoM</a>
     </div>
   </nav>
 </header>
@@ -171,41 +263,87 @@
   <section data-page="home">
     <div class="profile">
 
-      <!-- Column 1: photo, name, position -->
+      <!-- Left column: photo, name, position, department, email -->
       <div>
-        <!-- Upload a photo named profile.jpg to the repo; initials show until then -->
         <img class="photo" src="profile.png" alt="Photo of Josh Seidman"
              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
         <div class="photo-fallback" aria-hidden="true">JS</div>
         <h1 class="name">Josh Seidman</h1>
         <p class="position">PhD Candidate</p>
+
+        <div class="contact">
+          <address>
+            <span class="dept">Department of Mathematical and Statistical Sciences</span><br>
+            Marquette University<br>
+            Milwaukee, WI
+          </address>
+          <p class="email"><a href="mailto:josh.seidman@marquette.edu">josh.seidman@marquette.edu</a></p>
+        </div>
       </div>
 
-      <!-- Column 2: department and email -->
-      <div class="contact">
-        <address>
-          <span class="dept">Department of Mathematical and Statistical Sciences</span><br>
-          Marquette University<br>
-          Milwaukee, WI
-        </address>
-        <p class="email"><a href="mailto:josh.seidman@marquette.edu">josh.seidman@marquette.edu</a></p>
-      </div>
-
-      <!-- Column 3: research interests and CV -->
+      <!-- Right column: research interests, CV, and outside interests -->
       <div class="research">
         <h2>Research interests</h2>
         <p>I'm an applied mathematician working in scientific machine learning and uncertainty quantification, advised by Elaine Spiller. My research develops scalable statistical surrogates, called emulators, for expensive computer models of physical processes such as debris flows and other geophysical hazards.</p>
         <ul class="interests">
           <li>Gaussian process emulation and Vecchia approximations</li>
           <li>Deep Gaussian processes for high-dimensional model output</li>
-          <li>Uncertainty quantification and Bayesian model comparison</li>
           <li>Neural network models for geophysical flows</li>
           <li>Clinical prediction tools for health data</li>
         </ul>
         <!-- Upload your CV as "Josh Seidman CV.pdf" to the repo -->
-        <a class="cv-button" href="Josh%20Seidman%20CV.pdf" target="_blank" rel="noopener">View my CV (PDF)</a>
+        <a class="cv-button" href="Josh%20Seidman%20CV.pdf" target="_blank" rel="noopener">View my CV</a>
+
+        <div class="hobbies">
+          <h2>Additional interests</h2>
+          <dl>
+            <dt>Sports</dt>
+            <dd>Soccer, Football, Playoff Baseball</dd>
+            <dt>Video games</dt>
+            <dd>Apex Legends, Hunt: Showdown, Striker's Club</dd>
+            <dt>Movies</dt>
+            <dd>Inception, The Dark Knight, Whiplash, It's a Wonderful Life, The Room</dd>
+            <dt>TV shows</dt>
+            <dd>Breaking Bad, Ted Lasso, Chernobyl, BoJack Horseman</dd>
+            <dt>Books</dt>
+            <dd>Mistborn, 11/22/63, Project Hail Mary, Pendragon</dd>
+          </dl>
+        </div>
       </div>
 
+    </div>
+
+    <!-- Games and fun math: add more .feature blocks here later -->
+    <div class="misc">
+      <h2 class="misc-title">Games and fun math</h2>
+
+      <div class="feature">
+        <div>
+          <!-- Placeholder: upload a screenshot of the game as five-theorems.png -->
+          <img src="five-theorems.png" alt="Screenshot of the Five Theorems game"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div class="feature-placeholder">Five Theorems screenshot goes here</div>
+        </div>
+        <div>
+          <h3>Play my game Five Theorems, inspired by the game of 24!</h3>
+          <p>Inspired by the Game of 24, play this mental math game where you race against the clock to formulate math expressions equal to a specific goal.</p>
+          <p>I was inspired to develop this game since most math games do not incorporate higher level math concepts (number theory, topology, etc.) as a part of the core aspects of the game.</p>
+          <a class="cv-button" href="Five%20Theorems%20Game/">Play Five Theorems</a>
+        </div>
+      </div>
+      <div class="feature reverse">
+        <div>
+          <!-- Image is loaded straight from the DEoM solutions repo -->
+          <img src="https://raw.githubusercontent.com/SideofMan/Daily-Epsilon-of-Math-Solutions/HEAD/2026/August/8-11-img.png" alt="MATLAB plot of points in a circle colored by the regions formed by 4 random segments"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div class="feature-placeholder">August 11, 2026 solution image goes here</div>
+        </div>
+        <div>
+          <h3>Check out my solutions to the Your Daily Epsilon of Math Calendar!</h3>
+          <p>Here's an example of a code solution for August 11th, 2026, where I needed to solve for the maximum number of regions created by 4 segments in a circle. I sampled 4 random segments, and then a bunch of points in a circle, classified all the points and computed the number of different regions that way!</p>
+          <a class="cv-button" href="#deom">See all my DEoM solutions</a>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -321,10 +459,25 @@
     </div>
   </section>
 
-  <!-- ================= CODE ================= -->
-  <section data-page="code">
-    <h2 class="page-title">Code</h2>
+  <!-- ================= PROJECTS ================= -->
+  <section data-page="projects">
+    <h2 class="page-title">Projects</h2>
     <p>More of my work is on <a href="https://github.com/SideofMan" target="_blank" rel="noopener">my GitHub profile</a>.</p>
+
+    <h3>Research</h3>
+    <div class="entry">
+      <p class="entry-title">PPDGP</p>
+      <p class="entry-meta">An adaptation of Ming and Williamson's dgpsi package that allows for high-dimensional output.</p>
+      <p class="entry-links">
+        <a href="https://github.com/SideofMan/dgpsi-R" target="_blank" rel="noopener">R package on GitHub</a>
+        <a href="https://github.com/SideofMan/DGP" target="_blank" rel="noopener">Python package on GitHub</a>
+      </p>
+    </div>
+    <div class="entry">
+      <p class="entry-title">Custom kernels in RobustGaSP</p>
+      <p class="entry-meta">Implementing custom kernels within the RobustGaSP framework (see VPPE code).</p>
+      <p class="entry-links"><a href="https://github.com/SideofMan/VPPE" target="_blank" rel="noopener">View VPPE on GitHub</a></p>
+    </div>
     <div class="entry">
       <p class="entry-title">VPPE</p>
       <p class="entry-meta">R packages implementing scaled Vecchia approximations for the parallel partial emulator, accompanying my paper in the SIAM/ASA Journal on Uncertainty Quantification.</p>
@@ -340,6 +493,43 @@
       <p class="entry-meta">An R implementation of adaptive annealed importance sampling for evaluating marginal likelihoods in Bayesian model comparison.</p>
       <p class="entry-links"><a href="https://github.com/SideofMan/AAIS_R" target="_blank" rel="noopener">View on GitHub</a></p>
     </div>
+
+    <h3>Class</h3>
+    <div class="entry">
+      <p class="entry-title">R Shiny app for the EM algorithm</p>
+      <p class="entry-meta">Final project implementing the expectation-maximization algorithm in an interactive R Shiny app. MSSC 6010, Marquette University, Fall 2023.</p>
+      <p class="entry-links"><a href="https://github.com/SideofMan/CompProb-FinalProject" target="_blank" rel="noopener">View on GitHub</a></p>
+    </div>
+    <div class="entry">
+      <p class="entry-title">PCA for facial detection</p>
+      <p class="entry-meta">Group project using principal component analysis for facial detection. MSSC 5931 Mathematical Foundations of Data Science, Marquette University.</p>
+      <p class="entry-links"><a href="https://github.com/HMedeirosDosReis/MathematicalFoundationOfDataScience" target="_blank" rel="noopener">View on GitHub</a></p>
+    </div>
+
+    <h3>Fun</h3>
+    <!-- Add fun projects here as .entry blocks -->
+    <p class="entry-meta">Coming soon.</p>
+  </section>
+
+  <!-- ================= DEoM ================= -->
+  <section data-page="deom">
+    <h2 class="page-title">Your Daily Epsilon of Math Solutions</h2>
+    <p class="deom-intro">Every year I get the Your Daily Epsilon of Math calendar by Rebecca Rapoport and Dean Chung, so this year I decided to type up all my solutions in LaTeX and post them on
+      <a href="https://github.com/SideofMan/Daily-Epsilon-of-Math-Solutions" target="_blank" rel="noopener">GitHub</a>.
+      I've also included MATLAB code solutions for (almost) every problem!</p>
+
+    <div class="deom-controls">
+      <label>Year
+        <select id="deom-year" aria-label="Year"></select>
+      </label>
+      <label>Month
+        <select id="deom-month" aria-label="Month"></select>
+      </label>
+      <a class="side-link" id="deom-intro-link" href="#deom">Read the introduction</a>
+    </div>
+
+    <p class="deom-status" id="deom-status" role="status">Loading the list of solutions…</p>
+    <div class="deom-viewer" id="deom-viewer"></div>
   </section>
 
 </main>
@@ -347,7 +537,7 @@
 <footer>&copy; 2026 Josh Seidman</footer>
 
 <script>
-  // Shows one section at a time based on the #tab in the URL
+  // ---------- Tabs: shows one section at a time based on the #tab in the URL ----------
   function showPage() {
     var page = (location.hash || "#home").slice(1);
     var sections = document.querySelectorAll("section[data-page]");
@@ -357,13 +547,168 @@
       s.classList.toggle("shown", match);
       if (match) found = true;
     });
-    if (!found) document.querySelector('[data-page="home"]').classList.add("shown");
+    if (!found) {
+      page = "home";
+      document.querySelector('[data-page="home"]').classList.add("shown");
+    }
     document.querySelectorAll(".tabs a").forEach(function (a) {
       a.classList.toggle("active", a.getAttribute("href") === "#" + page);
     });
+    if (page === "deom") initDeom();
     window.scrollTo(0, 0);
   }
   window.addEventListener("hashchange", showPage);
+
+  // ---------- DEoM viewer ----------
+  // Expects files named like 2026/April/April_2026_DEoM_sols.pdf in the repo.
+  var DEOM_OWNER = "SideofMan";
+  var DEOM_REPO = "Daily-Epsilon-of-Math-Solutions";
+  var MONTHS = ["January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"];
+
+  var deomStarted = false;
+  var deomFiles = {};      // { "2026": { 3: "2026/April/April_2026_DEoM_sols.pdf", ... } }
+  var renderId = 0;
+
+  var yearSel = document.getElementById("deom-year");
+  var monthSel = document.getElementById("deom-month");
+  var statusEl = document.getElementById("deom-status");
+  var viewerEl = document.getElementById("deom-viewer");
+
+  if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  }
+
+  function rawUrl(path) {
+    return "https://raw.githubusercontent.com/" + DEOM_OWNER + "/" + DEOM_REPO + "/HEAD/" +
+      path.split("/").map(encodeURIComponent).join("/");
+  }
+
+  function addFile(year, monthIndex, path) {
+    if (!deomFiles[year]) deomFiles[year] = {};
+    deomFiles[year][monthIndex] = path;
+  }
+
+  // Reads the repo's file list from GitHub so new months appear automatically.
+  function loadFileList() {
+    var url = "https://api.github.com/repos/" + DEOM_OWNER + "/" + DEOM_REPO + "/git/trees/HEAD?recursive=1";
+    return fetch(url)
+      .then(function (r) { if (!r.ok) throw new Error("GitHub API " + r.status); return r.json(); })
+      .then(function (data) {
+        (data.tree || []).forEach(function (item) {
+          var m = item.path.match(/^(\d{4})\/([A-Za-z]+)\/[^\/]*_DEoM_sols\.pdf$/i);
+          if (!m) return;
+          var mi = MONTHS.findIndex(function (name) { return name.toLowerCase() === m[2].toLowerCase(); });
+          if (mi >= 0) addFile(m[1], mi, item.path);
+        });
+        if (!Object.keys(deomFiles).length) throw new Error("No solution files found");
+      })
+      .catch(function () {
+        // Fallback if GitHub's API is unavailable (it limits how often each visitor can ask):
+        // guess every month up to today using the usual file naming pattern.
+        deomFiles = {};
+        var now = new Date();
+        for (var y = 2026; y <= now.getFullYear(); y++) {
+          var lastMonth = (y === now.getFullYear()) ? now.getMonth() : 11;
+          for (var mi = 0; mi <= lastMonth; mi++) {
+            var name = MONTHS[mi];
+            addFile(String(y), mi, y + "/" + name + "/" + name + "_" + y + "_DEoM_sols.pdf");
+          }
+        }
+      });
+  }
+
+  function fillMonths() {
+    var months = Object.keys(deomFiles[yearSel.value] || {}).map(Number).sort(function (a, b) { return a - b; });
+    monthSel.innerHTML = "";
+    months.forEach(function (mi) {
+      var opt = document.createElement("option");
+      opt.value = mi;
+      opt.textContent = MONTHS[mi];
+      monthSel.appendChild(opt);
+    });
+    if (months.length) monthSel.value = months[months.length - 1];   // latest month
+  }
+
+  function showSelected() {
+    var path = (deomFiles[yearSel.value] || {})[monthSel.value];
+    if (path) showPdf(path, MONTHS[monthSel.value] + " " + yearSel.value);
+  }
+
+  function showPdf(path, label) {
+    var myId = ++renderId;
+    viewerEl.innerHTML = "";
+    if (!window.pdfjsLib) {
+      statusEl.textContent = "The PDF viewer couldn't load. Check your connection and refresh the page.";
+      return;
+    }
+    statusEl.textContent = "Loading " + label + "…";
+
+    pdfjsLib.getDocument({ url: rawUrl(path) }).promise
+      .then(function (pdf) {
+        if (myId !== renderId) return;
+        statusEl.textContent = label + " (" + pdf.numPages + (pdf.numPages === 1 ? " page)" : " pages)");
+        var width = viewerEl.clientWidth || 900;
+        var ratio = window.devicePixelRatio || 1;
+
+        // Render pages one after another so they appear in order
+        var chain = Promise.resolve();
+        for (var i = 1; i <= pdf.numPages; i++) {
+          (function (pageNum) {
+            chain = chain.then(function () {
+              if (myId !== renderId) return;
+              return pdf.getPage(pageNum).then(function (page) {
+                if (myId !== renderId) return;
+                var scale = width / page.getViewport({ scale: 1 }).width;
+                var viewport = page.getViewport({ scale: scale * ratio });
+                var canvas = document.createElement("canvas");
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                canvas.setAttribute("aria-label", label + ", page " + pageNum);
+                viewerEl.appendChild(canvas);
+                return page.render({ canvasContext: canvas.getContext("2d"), viewport: viewport }).promise;
+              });
+            });
+          })(i);
+        }
+        return chain;
+      })
+      .catch(function (err) {
+        if (myId !== renderId) return;
+        if (err && err.name === "MissingPDFException") {
+          statusEl.textContent = "Solutions for " + label + " haven't been posted yet. Try another month.";
+        } else {
+          statusEl.textContent = "Couldn't load " + label + ". Refresh the page to try again.";
+        }
+      });
+  }
+
+  function initDeom() {
+    if (deomStarted) return;
+    deomStarted = true;
+    loadFileList().then(function () {
+      var years = Object.keys(deomFiles).sort();
+      yearSel.innerHTML = "";
+      years.forEach(function (y) {
+        var opt = document.createElement("option");
+        opt.value = y;
+        opt.textContent = y;
+        yearSel.appendChild(opt);
+      });
+      yearSel.value = years[years.length - 1];   // latest year
+      fillMonths();
+      showSelected();
+    });
+  }
+
+  yearSel.addEventListener("change", function () { fillMonths(); showSelected(); });
+  monthSel.addEventListener("change", showSelected);
+  document.getElementById("deom-intro-link").addEventListener("click", function (e) {
+    e.preventDefault();
+    showPdf("Intro.pdf", "Introduction");
+  });
+
   showPage();
 </script>
 </body>
